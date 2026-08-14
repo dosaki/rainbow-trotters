@@ -1,0 +1,28 @@
+{
+  "name": "rainbow-trotters",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "js13k 2026 \u2014 a unicorn lightcycle game",
+  "author": "Tiago Correia",
+  "imports": {
+    "#shared": "./src/shared/index.js"
+  },
+  "scripts": {
+    "pretest": "./build.sh --ci",
+    "test": "node --test",
+    "build": "./build.sh --ci",
+    "dist": "./build.sh",
+    "dev": "node scripts/harness.mjs public 3000",
+    "predev": "./build.sh --dev"
+  },
+  "devDependencies": {
+    "express": "^4.21.0",
+    "playwright": "^1.62.1",
+    "roadroller": "^2.1.0",
+    "socket.io": "^4.8.0",
+    "socket.io-client": "^4.8.3",
+    "terser": "^5.36.0",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
