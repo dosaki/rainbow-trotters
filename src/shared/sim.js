@@ -1,5 +1,5 @@
-import { DIRS, ACTIVATE, BODY, DECAY_TICKS, ROUND_CAP_TICKS, WALL } from './constants.js';
-import { createArena, cellAt, paint, paintBody, bodyInBounds, frontier, clearOwner } from './arena.js';
+import { DIRS, ACTIVATE, BODY, DECAY_TICKS, ROUND_CAP_TICKS, WALL, BLAST } from './constants.js';
+import { createArena, cellAt, paint, paintBody, bodyInBounds, frontier, clearOwner, inBounds, clearCell, idx } from './arena.js';
 import { rngFrom } from './rng.js';
 import { createUnicorn, applyTurn, stepsThisTick } from './unicorn.js';
 import { expirePower, isGhost, isBreaking, breakSwath, usePower } from './powers.js';
@@ -33,12 +33,27 @@ export const aliveCount = (s) => s.unicorns.reduce((n, u) => n + (u.alive ? 1 : 
 
 export const unicornById = (s, id) => s.unicorns.find((u) => u.id === id);
 
+const blast = (s, x, y) => {
+    for (let oy = -BLAST; oy <= BLAST; oy++) {
+        for (let ox = -BLAST; ox <= BLAST; ox++) {
+            if (ox * ox + oy * oy > BLAST * BLAST) continue;
+            const ax = x + ox, ay = y + oy;
+            if (!inBounds(ax, ay)) continue;
+            const v = cellAt(s.grid, ax, ay);
+            if (v === 0 || v === WALL + 1) continue;
+            clearCell(s.grid, ax, ay);
+            s.events.broken.push(idx(ax, ay));
+        }
+    }
+};
+
 const kill = (s, u) => {
     if (!u.alive) return;
     u.alive = false;
     u.deathTick = s.tick;
     s.dead.push({ id: u.id, clearTick: s.tick + DECAY_TICKS });
     s.events.deaths.push(u.id);
+    blast(s, u.x, u.y);
 };
 
 const subStep = (s, movers) => {

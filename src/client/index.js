@@ -16,10 +16,7 @@ import { showLobby, hideLobby, renderLobby } from './ui/lobby.js';
 import { syncNames, clearNames } from './ui/names.js';
 import { showToast, clearToast } from './ui/toast.js';
 
-const { ctx } = setupCanvas(document.getElementById('c'));
-const hudEl = document.getElementById('h');
-const overlayEl = document.getElementById('o');
-const quitEl = document.getElementById('quit');
+const { ctx } = setupCanvas(c);
 
 let shownPhase = -1;
 const layers = createLayers(makeLayerCanvas);
@@ -47,15 +44,14 @@ const sock = connect({
     [EV.ERR]: (p) => menuError(p[0]),
 });
 
-const lobbyEl = document.getElementById('lobby');
 
 const shell = () => {
     hideMenu();
-    quitEl.hidden = false;
+    quit.hidden = false;
     if (net.phase === PHASE.LOBBY) {
-        lobbyEl.appendChild(quitEl);
-        quitEl.className = '';
-        quitEl.textContent = 'Back to Menu';
+        lobby.appendChild(quit);
+        quit.className = '';
+        quit.textContent = 'Back to Menu';
         showLobby(
             () => sock.send(EV.READY, []),
             (delta) => sock.send(EV.BOT, [delta]),
@@ -66,12 +62,12 @@ const shell = () => {
         );
         renderLobby(net);
         clearNames();
-        hudEl.textContent = '';
-        overlayEl.textContent = '';
+        h.textContent = '';
+        o.textContent = '';
     } else {
-        document.body.appendChild(quitEl);
-        quitEl.className = 'float';
-        quitEl.textContent = 'Menu';
+        document.body.appendChild(quit);
+        quit.className = 'float';
+        quit.textContent = 'Menu';
         hideLobby();
     }
 };
@@ -79,7 +75,7 @@ const shell = () => {
 const choose = (mode, name, code) => sock.send(EV.MENU, [mode, name, code]);
 showMenu(choose);
 
-const quit = () => {
+const leave = () => {
     if (net.myId < 0) return;
     sock.send(EV.QUIT, []);
     net.myId = -1;
@@ -89,16 +85,16 @@ const quit = () => {
     clearNames();
     clearToast();
     hideLobby();
-    quitEl.hidden = true;
-    hudEl.textContent = '';
-    overlayEl.textContent = '';
+    quit.hidden = true;
+    h.textContent = '';
+    o.textContent = '';
     showMenu(choose);
 };
 
-quitEl.onclick = quit;
+quit.onclick = leave;
 addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        quit();
+        leave();
     }
 });
 
@@ -193,7 +189,7 @@ const frame = () => {
     }
     if (net.phase === PHASE.LOBBY) return;
     if (!net.state) {
-        drawOverlay(overlayEl, net);
+        drawOverlay(o, net);
         return;
     }
     const s = net.state;
@@ -221,8 +217,9 @@ const frame = () => {
             }
         }
         const power = me && predicting ? p.power : u.power;
+        const left = me && predicting ? p.powerTicks : u.powerTicks;
         if (power) {
-            drawPowerRing(ctx, p.x, p.y, power);
+            drawPowerRing(ctx, p.x, p.y, power, left);
         }
         if (power === SPEED) {
             drawBoost(ctx, p.x, p.y, p.dir);
@@ -243,7 +240,7 @@ const frame = () => {
         .filter((u) => u.alive)
         .map((u) => [u.id, u.x, u.y - HALF, hue(u.id), net.nameOf(u.id)]));
 
-    drawHud(hudEl, net);
-    drawOverlay(overlayEl, net);
+    drawHud(h, net);
+    drawOverlay(o, net);
 };
 requestAnimationFrame(frame);

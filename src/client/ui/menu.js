@@ -1,6 +1,5 @@
 import { MODE, ERR } from '#shared';
 
-const el = (id) => document.getElementById(id);
 const KEY = 'rt.name';
 
 export const savedName = () => {
@@ -26,27 +25,27 @@ const MESSAGE = {
 };
 
 export const menuError = (reason) => {
-    el('err').textContent = MESSAGE[reason] || 'Could not join';
+    err.textContent = MESSAGE[reason] || 'Could not join';
 };
 
-export const hideMenu = () => { el('menu').hidden = true; };
+export const hideMenu = () => { menu.hidden = true; };
 
 export const showMenu = (onChoose) => {
-    el('menu').hidden = false;
-    el('name').value = savedName();
+    menu.hidden = false;
+    nm.value = savedName();
 
     const choose = (mode) => {
-        const name = el('name').value.trim();
+        const name = nm.value.trim();
         remember(name);
-        el('err').textContent = '';
-        onChoose(mode, name, el('code').value.trim());
+        err.textContent = '';
+        onChoose(mode, name, code.value.trim());
     };
 
-    el('solo').onclick = () => choose(MODE.SOLO);
-    el('auto').onclick = () => choose(MODE.AUTO);
-    el('make').onclick = () => choose(MODE.CREATE);
-    el('join').onclick = () => choose(MODE.JOIN);
-    el('code').onkeydown = (e) => {
+    solo.onclick = () => choose(MODE.SOLO);
+    auto.onclick = () => choose(MODE.AUTO);
+    make.onclick = () => choose(MODE.CREATE);
+    join.onclick = () => choose(MODE.JOIN);
+    code.onkeydown = (e) => {
         if (e.key === 'Enter') {
             choose(MODE.JOIN);
         }

@@ -3,14 +3,14 @@ const DURATION = 1400;
 let text = '';
 let until = 0;
 
-const el = () => (typeof document === 'undefined' ? null : document.getElementById('t'));
+const el = () => (typeof t === 'undefined' ? null : t);
 
-export const showToast = (t, now = Date.now(), ms = DURATION) => {
-    text = t;
+export const showToast = (msg, now = Date.now(), ms = DURATION) => {
+    text = msg;
     until = now + ms;
     const e = el();
     if (!e) return;
-    e.textContent = t;
+    e.textContent = msg;
     e.classList.remove('go');
     void e.offsetWidth;
     e.classList.add('go');

@@ -77,6 +77,6 @@ export const createPredictor = (myId) => ({
             }
         }
 
-        return { x, y, dir, alive, cells, power, held };
+        return { x, y, dir, alive, cells, power, held, powerTicks };
     },
 });

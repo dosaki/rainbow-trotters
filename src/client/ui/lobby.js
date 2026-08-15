@@ -1,22 +1,21 @@
 import { mapAt } from '#shared';
 
-const el = (id) => document.getElementById(id);
 
-export const hideLobby = () => { el('lobby').hidden = true; };
+export const hideLobby = () => { lobby.hidden = true; };
 
 export const showLobby = (onReady, onBot, onMap, onImport) => {
-    el('lobby').hidden = false;
-    el('ready').onclick = onReady;
-    el('botmore').onclick = () => onBot(1);
-    el('botless').onclick = () => onBot(-1);
-    el('map').onclick = () => onMap(1);
-    el('mapadd').onclick = () => onImport(el('mapin').value);
+    lobby.hidden = false;
+    ready.onclick = onReady;
+    botmore.onclick = () => onBot(1);
+    botless.onclick = () => onBot(-1);
+    map.onclick = () => onMap(1);
+    mapadd.onclick = () => onImport(mapin.value);
 };
 
 export const renderLobby = (net) => {
-    el('lcode').textContent = net.code ? `Lobby ${net.code}` : 'Single player';
+    lcode.textContent = net.code ? `Lobby ${net.code}` : 'Single player';
 
-    const list = el('ppl');
+    const list = ppl;
     list.textContent = '';
     for (const [id, hue] of net.players) {
         const li = document.createElement('li');
@@ -27,12 +26,12 @@ export const renderLobby = (net) => {
 
     const host = net.isHost();
     const label = `Map: ${mapAt(net.map, net.custom).n}`;
-    el('map').hidden = !host;
-    el('map').textContent = label;
-    el('mapname').hidden = host;
-    el('mapname').textContent = label;
+    map.hidden = !host;
+    map.textContent = label;
+    mapname.hidden = host;
+    mapname.textContent = label;
 
-    el('imp').hidden = !host;
-    el('bots').hidden = !host;
-    el('ready').textContent = net.readyOf(net.myId) ? 'Not ready' : 'Ready';
+    imp.hidden = !host;
+    bots.hidden = !host;
+    ready.textContent = net.readyOf(net.myId) ? 'Not ready' : 'Ready';
 };

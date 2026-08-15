@@ -10,6 +10,13 @@ const BROWSER = {
     innerWidth: 'readonly', innerHeight: 'readonly',
     localStorage: 'readonly', AudioContext: 'readonly',
     io: 'readonly',
+    c: 'readonly', h: 'readonly', o: 'readonly', n: 'readonly', t: 'readonly',
+    menu: 'readonly', lobby: 'readonly', err: 'readonly', nm: 'readonly',
+    solo: 'readonly', auto: 'readonly', make: 'readonly', code: 'readonly',
+    join: 'readonly', lcode: 'readonly', ppl: 'readonly', ready: 'readonly',
+    quit: 'readonly', bots: 'readonly', botmore: 'readonly', botless: 'readonly',
+    map: 'readonly', mapname: 'readonly', imp: 'readonly', mapin: 'readonly',
+    mapadd: 'readonly',
 };
 
 const SANDBOX = { ...ES, Buffer: 'readonly', storage: 'readonly', io: 'readonly', module: 'writable' };

@@ -1,4 +1,6 @@
-import { DIRS, BODY, HALF, GHOST, BREAK, SPEED } from '#shared';
+import { DIRS, BODY, HALF, GHOST, BREAK, SPEED, TICK_MS } from '#shared';
+
+const WARN = 1000 / TICK_MS;
 
 export const POWER_COLOUR = { [GHOST]: '#9ff', [BREAK]: '#f9c', [SPEED]: '#ffd' };
 export const POWER_NAME = { [GHOST]: 'GHOST', [BREAK]: 'BREAK', [SPEED]: 'SPEED' };
@@ -10,10 +12,14 @@ export const drawSparkle = (ctx, sp, tick) => {
     ctx.globalAlpha = 1;
 };
 
-export const drawPowerRing = (ctx, x, y, power) => {
+export const drawPowerRing = (ctx, x, y, power, left) => {
     ctx.strokeStyle = POWER_COLOUR[power] || '#fff';
     ctx.lineWidth = 1;
+    if (left < WARN) {
+        ctx.globalAlpha = (left / WARN) * 0.45 + 0.55 * (0.55 + 0.45 * Math.cos(left * 0.45));
+    }
     ctx.strokeRect(x - HALF - 2.5, y - HALF - 2.5, BODY + 5, BODY + 5);
+    ctx.globalAlpha = 1;
 };
 
 export const drawBoost = (ctx, x, y, dir) => {

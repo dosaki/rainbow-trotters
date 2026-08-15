@@ -7,9 +7,9 @@ export const TICK_MS = 25;
 
 export const STEP_COST = 8;
 export const STEP_GAIN = 4;
-export const STEP_GAIN_BOOST = 5;
+export const STEP_GAIN_BOOST = 6;
 
-export const POWER_TICKS = 80;
+export const POWER_TICKS = 120;
 export const DECAY_TICKS = 400;
 export const FADE_TICKS = 40;
 export const SPARKLE_EVERY = 120;
@@ -38,3 +38,4 @@ export const MAX_ROUNDS = 9;
 export const SOLO_BOTS = 3;
 
 export const WALL = MAX_PLAYERS;
+export const BLAST = 6;

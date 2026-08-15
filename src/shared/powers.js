@@ -26,7 +26,7 @@ export const breakSwath = (grid, x, y, dir) => {
     const [dx, dy] = DIRS[dir];
     const cx = x + dx * (HALF + 1), cy = y + dy * (HALF + 1);
     const px = dy, py = dx;
-    const reach = HALF + BODY;
+    const reach = HALF + BODY * 2;
     const cleared = [];
     for (let k = -reach; k <= reach; k++) {
         const ax = cx + px * k, ay = cy + py * k;
