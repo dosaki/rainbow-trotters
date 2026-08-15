@@ -2,15 +2,58 @@
 <meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Rainbow Trotters</title>
 <style>
-html,body{margin:0;height:100%;background:#07070d;overflow:hidden;
+html,body{margin:0;height:100%;background:#04040a;overflow:hidden;
 font:600 16px/1.3 system-ui,sans-serif;color:#fff;touch-action:none;
 display:flex;align-items:center;justify-content:center}
-#c{display:block;image-rendering:pixelated}
+#c{display:block;image-rendering:pixelated;border:2px solid #45457d;
+box-sizing:border-box}
 #o{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
 text-align:center;pointer-events:none;text-shadow:0 2px 8px #000}
 #h{position:fixed;top:8px;left:8px;font-size:14px;opacity:.85}
+#n{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+#n div{position:absolute;font-size:12px;white-space:nowrap;
+text-shadow:0 1px 3px #000;will-change:transform}
+.p{position:fixed;inset:0;display:flex;flex-direction:column;gap:10px;
+align-items:center;justify-content:center;background:#04040a}
+.p[hidden]{display:none}
+button,input{font:inherit;padding:10px 16px;border-radius:8px;border:0}
+button{background:#2a2a44;color:#fff;cursor:pointer;min-width:220px}
+button:hover{background:#3a3a5e}
+input{background:#15152a;color:#fff;text-align:center;min-width:200px}
+#err{color:#f9c;min-height:1.2em}
+#t{position:fixed;top:36%;left:0;right:0;text-align:center;pointer-events:none;
+font-size:26px;text-shadow:0 2px 10px #000;opacity:0}
+#t.go{animation:pop 1.4s ease-out forwards}
+@keyframes pop{0%{opacity:0;transform:scale(.5)}
+10%{opacity:1;transform:scale(1.25)}
+22%{transform:scale(1)}
+65%{opacity:1;transform:scale(1)}
+100%{opacity:0;transform:scale(1.1)}}
+#quit.float{position:fixed;top:8px;right:8px;min-width:0;padding:6px 12px;
+font-size:14px;z-index:2}
+#quit[hidden]{display:none}
+#ppl{list-style:none;padding:0;margin:0;text-align:center}
 </style></head><body>
-<canvas id=c></canvas><div id=h></div><div id=o></div>
+<canvas id=c></canvas><div id=h></div><div id=o></div><div id=n></div><div id=t></div>
+
+<div class=p id=menu>
+  <input id=name maxlength=12 placeholder="Your name">
+  <button id=solo>Single-player</button>
+  <button id=auto>Auto-join</button>
+  <button id=make>Create lobby</button>
+  <div><input id=code placeholder="Paste a lobby code here"> <button id=join>Join</button></div>
+  <div id=err></div>
+</div>
+
+<div class=p id=lobby hidden>
+  <div id=lcode></div>
+  <ul id=ppl></ul>
+  <div id=bots hidden><button id=botless>- bot</button> <button id=botmore>+ bot</button></div>
+  <button id=ready>Ready</button>
+</div>
+
+<button id=quit hidden>Menu</button>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="shared.js" data-keep></script>
 <script src="client.js"></script>

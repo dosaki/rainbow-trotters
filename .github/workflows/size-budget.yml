@@ -1,0 +1,46 @@
+name: size-budget
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  budget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install zopfli-capable zip
+        run: sudo apt-get update && sudo apt-get install -y advancecomp
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Cache browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Lint and tests
+        run: npm test
+
+      - name: Pack and check the budget
+        run: ./build.sh --dist
+
+      - name: Verify the game actually boots
+        run: node scripts/verify.mjs dist/rainbow-trotters.zip

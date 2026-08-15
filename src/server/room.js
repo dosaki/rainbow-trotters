@@ -1,25 +1,29 @@
 import {
-    createState, tickSim, roundOver, spawnSlot, rngFrom,
-    HUES, MAX_PLAYERS, MIN_PLAYERS, PHASE, EV,
+    createState, tickSim, roundOver, spawnSlot, rngFrom, cleanName,
+    HUES, MAX_PLAYERS, WINS_TO_TAKE, MAX_ROUNDS, PHASE, EV,
 } from '#shared';
 import { enterPhase, phaseLength } from './round.js';
 import { broadcast } from './broadcast.js';
 import { botInputs } from './bots/bot.js';
 
-export const createRoom = () => ({
+export const createRoom = (code = '', open = false) => ({
+    code,
+    open,
+    hostId: -1,
+    rounds: 0,
     players: new Map(),
     slots: Array.from({ length: MAX_PLAYERS }, (_, i) => i),
     seed: 0,
     tick: 0,
     state: null,
-    phase: PHASE.RESULTS,
+    phase: PHASE.LOBBY,
     phaseTick: 0,
     turnLog: [],
     roster: [],
     botRng: rngFrom(1),
 });
 
-export const addPlayer = (room, socket, isBot) => {
+export const addPlayer = (room, socket, isBot, name = '') => {
     if (!room.slots.length) return null;
     const slot = room.slots.shift();
     const player = {
@@ -27,9 +31,22 @@ export const addPlayer = (room, socket, isBot) => {
         hue: HUES[slot],
         socket,
         bot: !!isBot,
+        name: cleanName(isBot ? `Bot ${slot + 1}` : name, slot),
+        ready: !!isBot,
+        wins: 0,
         pending: [],
     };
     room.players.set(player.id, player);
+    if (!isBot && room.hostId < 0) {
+        room.hostId = player.id;
+    }
+    if (!isBot && room.phase === PHASE.LOBBY) {
+        for (const q of room.players.values()) {
+            if (!q.bot && q !== player) {
+                q.ready = false;
+            }
+        }
+    }
     return player;
 };
 
@@ -38,6 +55,15 @@ export const removePlayer = (room, id) => {
     if (!p) return;
     room.slots.unshift(p.id);
     room.players.delete(id);
+    if (room.hostId === id) {
+        room.hostId = -1;
+        for (const q of room.players.values()) {
+            if (!q.bot) {
+                room.hostId = q.id;
+                break;
+            }
+        }
+    }
     const u = room.state && room.state.unicorns.find((x) => x.id === id);
     if (u && u.alive) {
         u.alive = false;
@@ -54,14 +80,9 @@ export const addHuman = (room, socket) => {
     return addPlayer(room, socket, false);
 };
 
-export const backfill = (room) => {
-    while (room.players.size < MIN_PLAYERS) {
-        if (!addPlayer(room, null, true)) break;
-    }
-};
-
 export const playerList = (room) =>
-    [...room.players.values()].map((p) => [p.id, p.hue, p.bot ? 1 : 0]);
+    [...room.players.values()].map(
+        (p) => [p.id, p.hue, p.bot ? 1 : 0, p.name, p.ready ? 1 : 0, p.wins]);
 
 export const humansIn = (room) => {
     const ids = new Set();
@@ -73,13 +94,93 @@ export const humansIn = (room) => {
     return ids;
 };
 
+export const stateOf = (room) => [room.phase, room.code, room.hostId, playerList(room)];
+
+export const setReady = (room, id, on) => {
+    const p = room.players.get(id);
+    if (p && !p.bot) {
+        p.ready = !!on;
+    }
+};
+
+export const allReady = (room) => {
+    let humans = 0;
+    for (const p of room.players.values()) {
+        if (p.bot) continue;
+        humans++;
+        if (!p.ready) return false;
+    }
+    return humans > 0;
+};
+
+export const addBot = (room) => addPlayer(room, null, true, '');
+
+export const removeBot = (room) => {
+    for (const p of [...room.players.values()].reverse()) {
+        if (!p.bot) continue;
+        removePlayer(room, p.id);
+        return true;
+    }
+    return false;
+};
+
+export const toLobby = (room) => {
+    for (const p of room.players.values()) {
+        p.wins = 0;
+        p.ready = p.bot;
+        p.pending.length = 0;
+    }
+    room.rounds = 0;
+    room.state = null;
+    room.turnLog.length = 0;
+    room.roster = [];
+    enterPhase(room, PHASE.LOBBY);
+};
+
+export const awardRound = (room) => {
+    room.rounds++;
+    const alive = room.state.unicorns.filter((u) => u.alive);
+    if (!alive.length) return -1;
+    const winner = alive.length === 1
+        ? alive[0]
+        : alive.reduce((a, b) => (b.cells > a.cells ? b : a));
+    const p = room.players.get(winner.id);
+    if (p) {
+        p.wins++;
+    }
+    return winner.id;
+};
+
+export const gameResult = (room) => {
+    let top = null;
+    for (const p of room.players.values()) {
+        if (!top || p.wins > top.wins) {
+            top = p;
+        }
+    }
+    if (!top) return null;
+    if (top.wins >= WINS_TO_TAKE) return { winner: top.id, wins: top.wins };
+    if (room.rounds < MAX_ROUNDS) return null;
+
+    const cellsOf = (id) => {
+        const u = room.state && room.state.unicorns.find((x) => x.id === id);
+        return u ? u.cells : 0;
+    };
+    let win = null;
+    for (const p of room.players.values()) {
+        if (!win
+            || p.wins > win.wins
+            || (p.wins === win.wins && cellsOf(p.id) > cellsOf(win.id))) win = p;
+    }
+    return { winner: win.id, wins: win.wins };
+};
+
 export const spawnsFor = (room) => {
     const ids = [...room.players.keys()];
     return ids.map((id, i) => ({ id, ...spawnSlot(i, ids.length) }));
 };
 
 export const startRound = (room) => {
-    backfill(room);
     room.seed = (Math.random() * 0x7fffffff) | 0;
     room.turnLog.length = 0;
     room.state = createState(room.seed, spawnsFor(room));
@@ -88,9 +189,24 @@ export const startRound = (room) => {
     broadcast(room, EV.ROUND, [room.seed, room.tick, room.roster]);
 };
 
+export const startGame = (room) => {
+    room.rounds = 0;
+    for (const p of room.players.values()) {
+        p.wins = 0;
+    }
+    startRound(room);
+};
+
 export const advance = (room) => {
     room.tick++;
     room.phaseTick++;
+
+    if (room.phase === PHASE.LOBBY) {
+        if (allReady(room)) {
+            startGame(room);
+        }
+        return;
+    }
 
     if (room.phase === PHASE.RACE) {
         for (const p of room.players.values()) {
@@ -118,6 +234,7 @@ export const advance = (room) => {
         tickSim(room.state, turns);
         broadcast(room, EV.TICK, [room.state.tick, turns]);
         if (roundOver(room.state, humansIn(room))) {
+            awardRound(room);
             enterPhase(room, PHASE.RESULTS);
         }
         return;
@@ -126,6 +243,14 @@ export const advance = (room) => {
     if (room.phaseTick < phaseLength(room.phase)) return;
     if (room.phase === PHASE.COUNTDOWN) {
         enterPhase(room, PHASE.RACE);
+        return;
     }
-    else startRound(room);
+
+    if (!gameResult(room)) {
+        startRound(room);
+        return;
+    }
+
+    toLobby(room);
+    broadcast(room, EV.STATE, stateOf(room));
 };

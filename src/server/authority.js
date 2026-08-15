@@ -24,4 +24,6 @@ export const helloPayload = (room, player) => [
     room.tick,
     room.roster,
     room.turnLog,
+    room.code,
+    room.hostId,
 ];

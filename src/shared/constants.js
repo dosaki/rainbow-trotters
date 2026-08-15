@@ -31,3 +31,8 @@ export const BREAK = 2;
 export const SPEED = 3;
 
 export const ACTIVATE = 4;
+
+export const NAME_MAX = 12;
+export const WINS_TO_TAKE = 3;
+export const MAX_ROUNDS = 9;
+export const SOLO_BOTS = 3;

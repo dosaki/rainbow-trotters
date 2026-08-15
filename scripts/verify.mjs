@@ -53,7 +53,14 @@ page.on('response', (r) => {
 });
 
 await page.goto(url, { waitUntil: 'load' });
-await page.waitForTimeout(2500);
+
+try {
+    await page.click('#solo', { timeout: 5000 });
+} catch {
+    failures.push('no #solo button on the menu, the game cannot be started at all');
+}
+
+await page.waitForTimeout(6000);
 
 const state = await page.evaluate(() => ({
     scripts: document.scripts.length,

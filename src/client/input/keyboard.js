@@ -13,8 +13,9 @@ export const keyToInput = (key) => {
 
 export const relativeTurn = (dir, side) => (dir + side + 4) % 4;
 
-export const bindKeyboard = (onInput) => {
+export const bindKeyboard = (onInput, allow) => {
     addEventListener('keydown', (e) => {
+        if (!allow(e)) return;
         const i = keyToInput(e.key);
         if (i < 0) return;
         e.preventDefault();

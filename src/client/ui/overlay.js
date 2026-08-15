@@ -20,9 +20,9 @@ export const drawOverlay = (el, net, now = Date.now()) => {
         const wait = Math.max(0, secondsLeft(net.resultAt || now, RESULTS_TICKS, now));
         const who = !net.me() ? 'ROUND OVER'
             : result.winner === net.myId ? 'YOU WIN'
-                : result.reason === 'out' ? 'YOU CRASHED'
-                    : result.winner < 0 ? 'EVERYONE CRASHED'
-                        : 'ROUND OVER';
+                : result.winner >= 0 ? `${net.nameOf(result.winner)} WINS`
+                    : result.reason === 'out' ? 'YOU CRASHED'
+                        : 'EVERYONE CRASHED';
         el.textContent = `${who} · next round in ${wait}`;
         return;
     }
@@ -32,5 +32,9 @@ export const drawOverlay = (el, net, now = Date.now()) => {
         el.textContent = 'spectating · next round soon';
         return;
     }
-    el.textContent = me.alive ? '' : `crashed · ${aliveCount(net.state)} still racing`;
+    if (me.alive) {
+        el.textContent = '';
+        return;
+    }
+    el.textContent = `crashed · ${aliveCount(net.state)} still racing`;
 };

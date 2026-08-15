@@ -1,10 +1,10 @@
-import { EV, TICK_MS, PHASE } from '#shared';
-import { createRoom, addHuman, removePlayer, advance, startRound, backfill } from './room.js';
+import { EV, MODE, ERR, PHASE, TICK_MS, SOLO_BOTS } from '#shared';
+import { addPlayer, addBot, removeBot, advance, setReady, stateOf } from './room.js';
+import { createRegistry, createLobby, joinByCode, autoJoin, dropPlayer } from './lobby.js';
 import { scheduleTurn, helloPayload } from './authority.js';
 import { broadcast, sendTo } from './broadcast.js';
 
-const room = createRoom();
-startRound(room);
+const rooms = createRegistry();
 
 let lastAt = Date.now();
 let owed = 0;
@@ -14,41 +14,106 @@ setInterval(() => {
     lastAt = now;
     for (let n = 0; owed >= TICK_MS && n < 5; n++) {
         owed -= TICK_MS;
-        advance(room);
+        for (const room of rooms.values()) {
+            advance(room);
+        }
     }
     if (owed > TICK_MS * 20) {
         owed = 0;
     }
 }, TICK_MS);
 
+const announce = (room) => broadcast(room, EV.STATE, stateOf(room));
+
 export default {
     io: (socket) => {
-        const player = addHuman(room, socket);
-        if (!player) {
-            socket.disconnect();
-            return;
-        }
+        let room = null;
+        let player = null;
 
-        if (room.phase === PHASE.COUNTDOWN) {
-            startRound(room);
-        }
+        socket.on(EV.MENU, (msg) => {
+            if (room || !Array.isArray(msg)) return;
+            const [mode, name, code] = msg;
 
-        sendTo(player, EV.HELLO, helloPayload(room, player));
-        broadcast(room, EV.JOIN, [player.id, player.hue, 0]);
+            let target;
+            if (mode === MODE.JOIN) {
+                target = joinByCode(rooms, code);
+            }
+            else if (mode === MODE.AUTO) {
+                target = autoJoin(rooms);
+            }
+            else target = createLobby(rooms, false);
+
+            if (typeof target === 'number') {
+                sendTo({ socket }, EV.ERR, [target]);
+                return;
+            }
+
+            player = addPlayer(target, socket, false, name);
+            if (!player) {
+                sendTo({ socket }, EV.ERR, [ERR.FULL]);
+                return;
+            }
+            room = target;
+
+            if (mode === MODE.SOLO) {
+                for (let i = 0; i < SOLO_BOTS; i++) {
+                    addBot(room);
+                }
+                setReady(room, player.id, true);
+            }
+
+            sendTo(player, EV.HELLO, helloPayload(room, player));
+            announce(room);
+        });
+
+        socket.on(EV.READY, () => {
+            if (!room || room.phase !== PHASE.LOBBY) return;
+            setReady(room, player.id, !player.ready);
+            announce(room);
+        });
+
+        socket.on(EV.BOT, (msg) => {
+            if (!room || room.phase !== PHASE.LOBBY) return;
+            if (room.hostId !== player.id) return;
+            if (!Array.isArray(msg)) return;
+            if (msg[0] > 0) {
+                addBot(room);
+            } else {
+                removeBot(room);
+            }
+            announce(room);
+        });
+
+        socket.on(EV.QUIT, () => {
+            if (!room) return;
+            const gone = room;
+            const id = player.id;
+            room = null;
+            player = null;
+            dropPlayer(rooms, gone, id);
+            if (rooms.has(gone.code)) {
+                broadcast(gone, EV.STATE, stateOf(gone));
+            }
+        });
 
         socket.on(EV.TURN, (msg) => {
-            if (!Array.isArray(msg)) return;
+            if (!room || !Array.isArray(msg)) return;
             scheduleTurn(room, player, msg[0], msg[1]);
         });
+
         socket.on(EV.PING, (msg) => {
             if (!Array.isArray(msg)) return;
-            sendTo(player, EV.PONG, [msg[0], room.state ? room.state.tick : 0]);
+            sendTo({ socket }, EV.PONG, [msg[0], room && room.state ? room.state.tick : 0]);
         });
 
         socket.on('disconnect', () => {
-            removePlayer(room, player.id);
-            backfill(room);
-            broadcast(room, EV.LEAVE, [player.id]);
+            if (!room) return;
+            const gone = room;
+            dropPlayer(rooms, room, player.id);
+            room = null;
+            if (rooms.has(gone.code)) {
+                announce(gone);
+            }
         });
     },
 };

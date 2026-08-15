@@ -1,4 +1,4 @@
-import { EV, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS } from '#shared';
+import { EV, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF } from '#shared';
 import { connect, startPinging } from './net/socket.js';
 import { createNet } from './net/state.js';
 import { createClock } from './net/clock.js';
@@ -6,16 +6,22 @@ import { createPredictor } from './net/prediction.js';
 import { setupCanvas, makeLayerCanvas } from './render/canvas.js';
 import { createLayers, paintBodyRect, clearCells, clearLayer, beginFade, composite, repaintFromGrid } from './render/trails.js';
 import { drawUnicorn } from './render/unicorns.js';
-import { drawSparkle, drawPowerRing, drawBoost, drawBurst } from './render/effects.js';
-import { bindInput, setDirSource } from './input/index.js';
+import { drawSparkle, drawPowerRing, drawBoost, drawBurst, POWER_NAME } from './render/effects.js';
+import { bindInput, setDirSource, setInputActive } from './input/index.js';
 import { drawHud } from './ui/hud.js';
 import { drawOverlay } from './ui/overlay.js';
 import { sfx } from './audio/sfx.js';
+import { showMenu, hideMenu, menuError } from './ui/menu.js';
+import { showLobby, hideLobby, renderLobby } from './ui/lobby.js';
+import { syncNames, clearNames } from './ui/names.js';
+import { showToast, clearToast } from './ui/toast.js';
 
 const { ctx } = setupCanvas(document.getElementById('c'));
 const hudEl = document.getElementById('h');
 const overlayEl = document.getElementById('o');
+const quitEl = document.getElementById('quit');
 
+let shownPhase = -1;
 const layers = createLayers(makeLayerCanvas);
 const net = createNet();
 const clock = createClock();
@@ -37,11 +43,66 @@ const sock = connect({
     [EV.JOIN]: (p) => net.onJoin(p),
     [EV.LEAVE]: (p) => net.onLeave(p),
     [EV.PONG]: (p) => clock.onPong(p[0], Date.now()),
+    [EV.STATE]: (p) => { net.onState(p); shell(); },
+    [EV.ERR]: (p) => menuError(p[0]),
+});
+
+const lobbyEl = document.getElementById('lobby');
+
+const shell = () => {
+    hideMenu();
+    quitEl.hidden = false;
+    if (net.phase === PHASE.LOBBY) {
+        lobbyEl.appendChild(quitEl);
+        quitEl.className = '';
+        quitEl.textContent = 'Back to Menu';
+        showLobby(
+            () => sock.send(EV.READY, []),
+            (delta) => sock.send(EV.BOT, [delta]),
+        );
+        renderLobby(net);
+        clearNames();
+        hudEl.textContent = '';
+        overlayEl.textContent = '';
+    } else {
+        document.body.appendChild(quitEl);
+        quitEl.className = 'float';
+        quitEl.textContent = 'Menu';
+        hideLobby();
+    }
+};
+
+const choose = (mode, name, code) => sock.send(EV.MENU, [mode, name, code]);
+showMenu(choose);
+
+const quit = () => {
+    if (net.myId < 0) return;
+    sock.send(EV.QUIT, []);
+    net.myId = -1;
+    net.state = null;
+    net.phase = PHASE.RESULTS;
+    shownPhase = -1;
+    clearNames();
+    clearToast();
+    hideLobby();
+    quitEl.hidden = true;
+    hudEl.textContent = '';
+    overlayEl.textContent = '';
+    showMenu(choose);
+};
+
+quitEl.onclick = quit;
+addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        quit();
+    }
 });
 
 startPinging(sock);
 
 const lead = () => Math.min(10, net.buffer.length + clock.lagTicks);
+
+setInputActive(() => net.myId >= 0 && net.phase === PHASE.RACE);
 
 bindInput((input) => {
     if (!net.state || net.phase !== PHASE.RACE) return;
@@ -81,8 +142,11 @@ const applyTick = () => {
     }
 
     for (const [id] of ev.picked) {
-        if (id === net.myId) {
-            sfx('pickup');
+        if (id !== net.myId) continue;
+        sfx('pickup');
+        const mine = net.me();
+        if (mine && mine.held) {
+            showToast(`${POWER_NAME[mine.held]} · press SPACE`);
         }
     }
 
@@ -119,13 +183,18 @@ setInterval(() => {
 
 const frame = () => {
     requestAnimationFrame(frame);
+    if (net.myId >= 0 && net.phase !== shownPhase) {
+        shownPhase = net.phase;
+        shell();
+    }
+    if (net.phase === PHASE.LOBBY) return;
     if (!net.state) {
         drawOverlay(overlayEl, net);
         return;
     }
     const s = net.state;
 
-    ctx.fillStyle = '#07070d';
+    ctx.fillStyle = '#0c0c18';
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     composite(ctx, layers, s.tick);
 
@@ -165,6 +234,10 @@ const frame = () => {
         }
         drawBurst(ctx, bursts[i].x, bursts[i].y, bursts[i].hue, age);
     }
+
+    syncNames(s.unicorns
+        .filter((u) => u.alive)
+        .map((u) => [u.id, u.x, u.y - HALF, hue(u.id), net.nameOf(u.id)]));
 
     drawHud(hudEl, net);
     drawOverlay(overlayEl, net);

@@ -8,14 +8,16 @@
     "#shared": "./src/shared/index.js"
   },
   "scripts": {
-    "pretest": "./build.sh --ci",
+    "pretest": "eslint src && ./build.sh --ci",
     "test": "node --test",
     "build": "./build.sh --ci",
     "dist": "./build.sh",
     "dev": "node scripts/harness.mjs public 3000",
-    "predev": "./build.sh --dev"
+    "predev": "./build.sh --dev",
+    "lint": "eslint src"
   },
   "devDependencies": {
+    "eslint": "^10.8.1",
     "express": "^4.21.0",
     "playwright": "^1.62.1",
     "roadroller": "^2.1.0",
