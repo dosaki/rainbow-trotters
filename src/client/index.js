@@ -1,4 +1,4 @@
-import { EV, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF } from '#shared';
+import { EV, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, parseMap } from '#shared';
 import { connect, startPinging } from './net/socket.js';
 import { createNet } from './net/state.js';
 import { createClock } from './net/clock.js';
@@ -60,6 +60,9 @@ const shell = () => {
             () => sock.send(EV.READY, []),
             (delta) => sock.send(EV.BOT, [delta]),
             (delta) => sock.send(EV.MAP, [delta]),
+            (text) => (parseMap(text)
+                ? sock.send(EV.MAPSET, [text])
+                : showToast('Bad map')),
         );
         renderLobby(net);
         clearNames();

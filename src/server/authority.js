@@ -27,4 +27,5 @@ export const helloPayload = (room, player) => [
     room.code,
     room.hostId,
     room.map,
+    room.custom,
 ];

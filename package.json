@@ -12,6 +12,7 @@
     "test": "node --test",
     "build": "./build.sh --ci",
     "dist": "./build.sh",
+    "size": "./build.sh --dist --no-roadroller",
     "dev": "node scripts/harness.mjs public 3000",
     "predev": "./build.sh --dev",
     "lint": "eslint src"

@@ -1,4 +1,4 @@
-import { createState, tickSim, replay, startsFor, roundOver, PHASE } from '#shared';
+import { createState, tickSim, replay, startsFor, mapAt, roundOver, PHASE } from '#shared';
 
 const spawnsFrom = (players, map, seed) =>
     startsFor(players.map(([id]) => id), map, seed);
@@ -16,23 +16,27 @@ export const createNet = () => ({
     code: '',
     hostId: -1,
     map: 0,
+    custom: '',
 
     countdownAt: 0,
     resultAt: 0,
 
-    onHello([yourId, tick, seed, phase, startTick, players, turnLog, , , map]) {
+    onHello([yourId, tick, seed, phase, startTick, players, turnLog, , , map, custom]) {
         this.myId = yourId;
         this.phase = phase;
         this.map = map || 0;
+        this.custom = custom || '';
         this.setPlayers(players);
-        this.state = replay(seed, spawnsFrom(players, this.map, seed), turnLog, tick, this.map);
+        const m = mapAt(this.map, this.custom);
+        this.state = replay(seed, spawnsFrom(players, m, seed), turnLog, tick, m);
         this.buffer.length = 0;
     },
 
     onRound([seed, startTick, players, map], now = Date.now()) {
         this.setPlayers(players);
         this.map = map || 0;
-        this.state = createState(seed, spawnsFrom(players, this.map, seed), this.map);
+        const m = mapAt(this.map, this.custom);
+        this.state = createState(seed, spawnsFrom(players, m, seed), m);
         this.phase = PHASE.COUNTDOWN;
         this.buffer.length = 0;
         this.countdownAt = now;
@@ -53,11 +57,12 @@ export const createNet = () => ({
         this.wins = new Map(players.map(([id, , , , , w]) => [id, w || 0]));
     },
 
-    onState([phase, code, hostId, players, map]) {
+    onState([phase, code, hostId, players, map, custom]) {
         this.phase = phase;
         this.code = code;
         this.hostId = hostId;
         this.map = map || 0;
+        this.custom = custom || '';
         this.setPlayers(players);
     },
 

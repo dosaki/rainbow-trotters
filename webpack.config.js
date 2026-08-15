@@ -13,7 +13,7 @@ export default [
         output: {
             path: out,
             filename: 'shared.js',
-            library: { type: 'var', name: 'S' },
+            library: { type: 'assign', name: 'globalThis.S' },
         },
     },
     {

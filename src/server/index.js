@@ -1,4 +1,4 @@
-import { EV, MODE, ERR, PHASE, TICK_MS, SOLO_BOTS } from '#shared';
+import { EV, MODE, ERR, PHASE, TICK_MS, SOLO_BOTS, MAPS, parseMap } from '#shared';
 import { addPlayer, addBot, removeBot, advance, setReady, stateOf, cycleMap } from './room.js';
 import { createRegistry, createLobby, joinByCode, autoJoin, dropPlayer } from './lobby.js';
 import { scheduleTurn, helloPayload } from './authority.js';
@@ -89,6 +89,15 @@ export default {
             if (room.hostId !== player.id) return;
             if (!Array.isArray(msg)) return;
             cycleMap(room, msg[0]);
+            announce(room);
+        });
+
+        socket.on(EV.MAPSET, (msg) => {
+            if (!room || room.phase !== PHASE.LOBBY) return;
+            if (room.hostId !== player.id) return;
+            if (!Array.isArray(msg) || !parseMap(msg[0])) return;
+            room.custom = msg[0];
+            room.map = MAPS.length;
             announce(room);
         });
 

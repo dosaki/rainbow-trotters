@@ -6,7 +6,7 @@ import { expirePower, isGhost, isBreaking, breakSwath, usePower } from './powers
 import { maybeSpawn, collectAll } from './sparkles.js';
 import { paintMap } from './maps.js';
 
-export const createState = (seed, spawns, map = 0) => {
+export const createState = (seed, spawns, map = null) => {
     const grid = createArena();
     paintMap(grid, map);
     const unicorns = spawns.map((s) => createUnicorn(s.id, s.x, s.y, s.dir));
@@ -163,7 +163,7 @@ export const roundOver = (s, humans) => {
     return { winner: -1, reason: 'out' };
 };
 
-export const replay = (seed, spawns, turnLog, toTick, map = 0) => {
+export const replay = (seed, spawns, turnLog, toTick, map = null) => {
     const s = createState(seed, spawns, map);
     const byTick = new Map();
     for (const [t, id, dir] of turnLog) {

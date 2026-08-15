@@ -1,6 +1,6 @@
 import {
     createState, tickSim, roundOver, rngFrom, cleanName,
-    HUES, MAX_PLAYERS, WINS_TO_TAKE, MAX_ROUNDS, PHASE, EV, MAPS, startsFor,
+    HUES, MAX_PLAYERS, WINS_TO_TAKE, MAX_ROUNDS, PHASE, EV, startsFor, mapAt, mapCount,
 } from '#shared';
 import { enterPhase, phaseLength } from './round.js';
 import { broadcast } from './broadcast.js';
@@ -16,6 +16,7 @@ export const createRoom = (code = '', open = false) => ({
     slots: Array.from({ length: MAX_PLAYERS }, (_, i) => i),
     seed: 0,
     map: 0,
+    custom: '',
     tick: 0,
     state: null,
     phase: PHASE.LOBBY,
@@ -97,7 +98,7 @@ export const humansIn = (room) => {
 };
 
 export const stateOf = (room) =>
-    [room.phase, room.solo ? '' : room.code, room.hostId, playerList(room), room.map];
+    [room.phase, room.solo ? '' : room.code, room.hostId, playerList(room), room.map, room.custom];
 
 export const setReady = (room, id, on) => {
     const p = room.players.get(id);
@@ -119,7 +120,7 @@ export const allReady = (room) => {
 export const addBot = (room) => addPlayer(room, null, true, '');
 
 export const cycleMap = (room, delta) => {
-    const n = MAPS.length;
+    const n = mapCount(room.custom);
     room.map = (room.map + (delta > 0 ? 1 : -1)) % n;
 };
 
@@ -184,12 +185,12 @@ export const gameResult = (room) => {
 };
 
 export const spawnsFor = (room) =>
-    startsFor([...room.players.keys()], room.map, room.seed);
+    startsFor([...room.players.keys()], mapAt(room.map, room.custom), room.seed);
 
 export const startRound = (room) => {
     room.seed = (Math.random() * 0x7fffffff) | 0;
     room.turnLog.length = 0;
-    room.state = createState(room.seed, spawnsFor(room), room.map);
+    room.state = createState(room.seed, spawnsFor(room), mapAt(room.map, room.custom));
     room.roster = playerList(room);
     enterPhase(room, PHASE.COUNTDOWN);
     broadcast(room, EV.ROUND, [room.seed, room.tick, room.roster, room.map]);

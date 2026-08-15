@@ -5,14 +5,15 @@ export const EV = {
     READY: 'y',     // C->S []              toggle
     BOT: 'b',       // C->S [delta]         host only, +1 or -1
     MAP: 'a',       // C->S [delta]         host only, cycles the map
+    MAPSET: 'i',    // C->S [text]         host only, imports a map
     QUIT: 'x',      // C->S []              leave the room, back to the menu
-    HELLO: 'h',     // S->C [yourId, tick, seed, phase, startTick, players, turnLog, code, hostId, map]
+    HELLO: 'h',     // S->C [yourId, tick, seed, phase, startTick, players, turnLog, code, hostId, map, custom]
     TICK: 'k',      // S->C [tick, turns]
     ROUND: 'r',     // S->C [seed, startTick, players, map]
     JOIN: 'j',      // S->C [id, hue, bot, name]
     LEAVE: 'l',     // S->C [id]
     PONG: 'q',      // S->C [clientTime, tick]
-    STATE: 's',     // S->C [phase, code, hostId, players, map]
+    STATE: 's',     // S->C [phase, code, hostId, players, map, custom]
     ERR: 'e',       // S->C [reason]
 };
 
