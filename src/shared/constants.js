@@ -36,3 +36,5 @@ export const NAME_MAX = 12;
 export const WINS_TO_TAKE = 3;
 export const MAX_ROUNDS = 9;
 export const SOLO_BOTS = 3;
+
+export const WALL = MAX_PLAYERS;

@@ -59,6 +59,7 @@ const shell = () => {
         showLobby(
             () => sock.send(EV.READY, []),
             (delta) => sock.send(EV.BOT, [delta]),
+            (delta) => sock.send(EV.MAP, [delta]),
         );
         renderLobby(net);
         clearNames();

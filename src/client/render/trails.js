@@ -1,7 +1,7 @@
-import { W, H, MAX_PLAYERS, FADE_TICKS, BODY, HALF } from '#shared';
+import { W, H, MAX_PLAYERS, FADE_TICKS, BODY, HALF, WALL } from '#shared';
 
 export const createLayers = (make) =>
-    Array.from({ length: MAX_PLAYERS }, () => {
+    Array.from({ length: MAX_PLAYERS + 1 }, () => {
         const canvas = make();
         canvas.width = W;
         canvas.height = H;
@@ -11,7 +11,7 @@ export const createLayers = (make) =>
 const fill = (layers, id, hue) => {
     const l = layers[id];
     if (!l) return null;
-    l.ctx.fillStyle = `hsl(${hue} 90% 58%)`;
+    l.ctx.fillStyle = id === WALL ? '#45457d' : `hsl(${hue} 90% 58%)`;
     return l;
 };
 
@@ -32,8 +32,8 @@ export const clearLayer = (layers, id) => {
 export const clearCells = (layers, indices) => {
     for (const i of indices) {
         const x = i % W, y = (i / W) | 0;
-        for (const l of layers) {
-            l.ctx.clearRect(x, y, 1, 1);
+        for (let n = 0; n < MAX_PLAYERS; n++) {
+            layers[n].ctx.clearRect(x, y, 1, 1);
         }
     }
 };
@@ -63,7 +63,7 @@ export const composite = (ctx, layers, tick) => {
 };
 
 export const repaintFromGrid = (layers, grid, hueOf) => {
-    for (let i = 0; i < MAX_PLAYERS; i++) {
+    for (let i = 0; i < layers.length; i++) {
         clearLayer(layers, i);
     }
     for (let i = 0; i < grid.length; i++) {

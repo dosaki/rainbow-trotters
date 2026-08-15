@@ -60,6 +60,12 @@ try {
     failures.push('no #solo button on the menu, the game cannot be started at all');
 }
 
+try {
+    await page.click('#ready', { timeout: 5000 });
+} catch {
+    failures.push('no #ready button in the lobby, a game can never be started');
+}
+
 await page.waitForTimeout(6000);
 
 const state = await page.evaluate(() => ({

@@ -1,12 +1,14 @@
-import { DIRS, ACTIVATE, BODY, DECAY_TICKS, ROUND_CAP_TICKS } from './constants.js';
+import { DIRS, ACTIVATE, BODY, DECAY_TICKS, ROUND_CAP_TICKS, WALL } from './constants.js';
 import { createArena, cellAt, paint, paintBody, bodyInBounds, frontier, clearOwner } from './arena.js';
 import { rngFrom } from './rng.js';
 import { createUnicorn, applyTurn, stepsThisTick } from './unicorn.js';
 import { expirePower, isGhost, isBreaking, breakSwath, usePower } from './powers.js';
 import { maybeSpawn, collectAll } from './sparkles.js';
+import { paintMap } from './maps.js';
 
-export const createState = (seed, spawns) => {
+export const createState = (seed, spawns, map = 0) => {
     const grid = createArena();
+    paintMap(grid, map);
     const unicorns = spawns.map((s) => createUnicorn(s.id, s.x, s.y, s.dir));
     for (const u of unicorns) {
         paintBody(grid, u.x, u.y, u.id);
@@ -14,6 +16,7 @@ export const createState = (seed, spawns) => {
     return {
         tick: 0,
         seed,
+        map,
         rng: rngFrom(seed),
         grid,
         unicorns,
@@ -51,8 +54,13 @@ const subStep = (s, movers) => {
             doomed.add(m.u.id);
             continue;
         }
-        if (isGhost(m.u) || isBreaking(m.u)) continue;
-        if (m.front.some(([cx, cy]) => cellAt(s.grid, cx, cy) !== 0)) {
+        if (isGhost(m.u)) continue;
+        const wallOnly = isBreaking(m.u);
+        const hit = m.front.some(([cx, cy]) => {
+            const v = cellAt(s.grid, cx, cy);
+            return wallOnly ? v === WALL + 1 : v !== 0;
+        });
+        if (hit) {
             doomed.add(m.u.id);
         }
     }
@@ -155,8 +163,8 @@ export const roundOver = (s, humans) => {
     return { winner: -1, reason: 'out' };
 };
 
-export const replay = (seed, spawns, turnLog, toTick) => {
-    const s = createState(seed, spawns);
+export const replay = (seed, spawns, turnLog, toTick, map = 0) => {
+    const s = createState(seed, spawns, map);
     const byTick = new Map();
     for (const [t, id, dir] of turnLog) {
         if (!byTick.has(t)) {

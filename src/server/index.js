@@ -1,5 +1,5 @@
 import { EV, MODE, ERR, PHASE, TICK_MS, SOLO_BOTS } from '#shared';
-import { addPlayer, addBot, removeBot, advance, setReady, stateOf } from './room.js';
+import { addPlayer, addBot, removeBot, advance, setReady, stateOf, cycleMap } from './room.js';
 import { createRegistry, createLobby, joinByCode, autoJoin, dropPlayer } from './lobby.js';
 import { scheduleTurn, helloPayload } from './authority.js';
 import { broadcast, sendTo } from './broadcast.js';
@@ -56,10 +56,10 @@ export default {
             room = target;
 
             if (mode === MODE.SOLO) {
+                room.solo = true;
                 for (let i = 0; i < SOLO_BOTS; i++) {
                     addBot(room);
                 }
-                setReady(room, player.id, true);
             }
 
             sendTo(player, EV.HELLO, helloPayload(room, player));
@@ -81,6 +81,14 @@ export default {
             } else {
                 removeBot(room);
             }
+            announce(room);
+        });
+
+        socket.on(EV.MAP, (msg) => {
+            if (!room || room.phase !== PHASE.LOBBY) return;
+            if (room.hostId !== player.id) return;
+            if (!Array.isArray(msg)) return;
+            cycleMap(room, msg[0]);
             announce(room);
         });
 

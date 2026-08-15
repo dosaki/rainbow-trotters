@@ -4,6 +4,7 @@ export * from './arena.js';
 export * from './unicorn.js';
 export * from './powers.js';
 export * from './sparkles.js';
+export * from './maps.js';
 export * from './sim.js';
 export * from './names.js';
 export * from './protocol.js';

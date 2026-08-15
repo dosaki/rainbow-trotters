@@ -1,4 +1,4 @@
-import { GHOST, BREAK, POWER_TICKS, DIRS, BODY, HALF } from './constants.js';
+import { GHOST, BREAK, POWER_TICKS, DIRS, BODY, HALF, WALL } from './constants.js';
 import { idx, inBounds, cellAt, clearCell } from './arena.js';
 
 export const grantPower = (u, type) => {
@@ -31,7 +31,9 @@ export const breakSwath = (grid, x, y, dir) => {
     for (let k = -reach; k <= reach; k++) {
         const ax = cx + px * k, ay = cy + py * k;
         if (!inBounds(ax, ay)) continue;
-        if (cellAt(grid, ax, ay) !== 0) {
+        const v = cellAt(grid, ax, ay);
+        if (v === WALL + 1) continue;
+        if (v !== 0) {
             clearCell(grid, ax, ay);
         }
         cleared.push(idx(ax, ay));
