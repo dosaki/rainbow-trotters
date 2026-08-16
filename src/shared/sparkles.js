@@ -30,7 +30,7 @@ export const collectAll = (s) => {
             if (!u.alive || took.has(u.id)) continue;
             const dx = u.x - sp.x, dy = u.y - sp.y;
             if (Math.abs(dx) > PICKUP_REACH || Math.abs(dy) > PICKUP_REACH) continue;
-            const key = (dx * dx + dy * dy) * 100 - u.id;
+            const key = (dx * dx + dy * dy) * 100 + u.id;
             if (key < bestKey) {
                 bestKey = key;
                 best = u;

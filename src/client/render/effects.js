@@ -15,7 +15,7 @@ export const drawSparkle = (ctx, sp, tick) => {
 export const drawPowerRing = (ctx, x, y, power, left) => {
     ctx.strokeStyle = POWER_COLOUR[power] || '#fff';
     ctx.lineWidth = 1;
-    if (left < WARN) {
+    if (left <= WARN) {
         ctx.globalAlpha = (left / WARN) * 0.45 + 0.55 * (0.55 + 0.45 * Math.cos(left * 0.45));
     }
     ctx.strokeRect(x - HALF - 2.5, y - HALF - 2.5, BODY + 5, BODY + 5);

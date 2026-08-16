@@ -121,7 +121,7 @@ export const addBot = (room) => addPlayer(room, null, true, '');
 
 export const cycleMap = (room, delta) => {
     const n = mapCount(room.custom);
-    room.map = (room.map + (delta > 0 ? 1 : -1)) % n;
+    room.map = ((room.map + (delta > 0 ? 1 : -1)) % n + n) % n;
 };
 
 export const removeBot = (room) => {
