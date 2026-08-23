@@ -8,8 +8,8 @@ test('the harness boots the built server and serves the socket.io client', async
         assert.equal((await fetch(h.url)).status, 200);
         assert.equal((await fetch(new URL('/socket.io/socket.io.js', h.url))).status, 200,
             'a plain static server would 404 here and report the game dead');
-        assert.equal((await fetch(new URL('/shared.js', h.url))).status, 200,
-            'shared.js must be reachable as a real file, not inlined away');
+        assert.equal((await fetch(new URL('/server.js', h.url))).status, 200,
+            'server.js must be reachable as a real file, the client loads it for S');
     } finally {
         await h.close();
     }
@@ -21,7 +21,7 @@ test('the sandbox exposes only what the competition harness does', async () => {
         const allowed = new Set([
             'console', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
             'Buffer', 'storage', 'io', 'module', 'global',
-            'S',   // shared.js declares this on evaluation
+            'S',   // server.js declares this on evaluation
         ]);
         for (const k of Object.keys(h.sandbox)) {
             assert.ok(allowed.has(k), `sandbox leaked '${k}', the real harness would not provide it`);

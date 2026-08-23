@@ -10,8 +10,8 @@ import { drawSparkle, drawPowerRing, drawBoost, drawBurst, POWER_NAME } from './
 import { bindInput, setDirSource, setInputActive } from './input/index.js';
 import { drawHud } from './ui/hud.js';
 import { drawOverlay } from './ui/overlay.js';
-import { sfx } from './audio/sfx.js';
-import { showMenu, hideMenu, menuError } from './ui/menu.js';
+import { sfx, music, muted } from './audio/sfx.js';
+import { showMenu, hideMenu, menuError, load, save } from './ui/menu.js';
 import { showLobby, hideLobby, renderLobby } from './ui/lobby.js';
 import { syncNames, clearNames } from './ui/names.js';
 import { showToast, clearToast } from './ui/toast.js';
@@ -82,6 +82,7 @@ const leave = () => {
     net.state = null;
     net.phase = PHASE.RESULTS;
     shownPhase = -1;
+    audio();
     clearNames();
     clearToast();
     hideLobby();
@@ -90,6 +91,25 @@ const leave = () => {
     o.textContent = '';
     showMenu(choose);
 };
+
+let off = load('rt.mute') === '1';
+const audio = () => {
+    muted(off);
+    music(!off && net.phase === PHASE.RACE);
+    mute.textContent = off ? '🔇' : '🔊';
+};
+for (const [ev, name] of [['pointerover', 'hover'], ['pointerdown', 'click']]) {
+    addEventListener(ev, (e) => {
+        if (e.target.tagName === 'BUTTON') sfx(name);
+    });
+}
+
+mute.onclick = () => {
+    off = !off;
+    save('rt.mute', off ? '1' : '');
+    audio();
+};
+audio();
 
 quit.onclick = leave;
 addEventListener('keydown', (e) => {
@@ -149,10 +169,6 @@ const applyTick = () => {
             showToast(`${POWER_NAME[mine.held]} · press SPACE`);
         }
     }
-
-    if (net.phase === PHASE.COUNTDOWN && s.tick % 20 === 0) {
-        sfx('count');
-    }
 };
 
 setInterval(() => {
@@ -185,6 +201,7 @@ const frame = () => {
     requestAnimationFrame(frame);
     if (net.myId >= 0 && net.phase !== shownPhase) {
         shownPhase = net.phase;
+        audio();
         shell();
     }
     if (net.phase === PHASE.LOBBY) return;

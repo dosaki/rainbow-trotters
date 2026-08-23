@@ -1,22 +1,21 @@
 import { MODE, ERR } from '#shared';
 
-const KEY = 'rt.name';
-
-export const savedName = () => {
+export const load = (k) => {
     try {
-        return localStorage.getItem(KEY) || '';
+        return localStorage.getItem(k) || '';
     } catch {
         return '';
     }
 };
 
-const remember = (name) => {
+export const save = (k, v) => {
     try {
-        localStorage.setItem(KEY, name);
+        localStorage.setItem(k, v);
     } catch {
-        /* private browsing */
     }
 };
+
+export const savedName = () => load('rt.name');
 
 const MESSAGE = {
     [ERR.NO_ROOM]: 'No lobby with that code',
@@ -36,7 +35,7 @@ export const showMenu = (onChoose) => {
 
     const choose = (mode) => {
         const name = nm.value.trim();
-        remember(name);
+        save('rt.name', name);
         err.textContent = '';
         onChoose(mode, name, code.value.trim());
     };

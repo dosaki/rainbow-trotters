@@ -24,15 +24,22 @@ if [[ "${MODE}" != "--dev" ]]; then
     ./node_modules/.bin/terser "./public/${f}.js" -c -m -o "./public/${f}.tmp.js"
     mv "./public/${f}.tmp.js" "./public/${f}.js"
   done
+fi
 
-  if [[ "${ROADROLL}" == 1 ]]; then
-    for f in client shared; do
-      ./node_modules/.bin/roadroller "./public/${f}.js" -o "./public/${f}.rr.js"
-      mv "./public/${f}.rr.js" "./public/${f}.js"
-    done
-  fi
+{
+  cat ./public/shared.js
+  printf ';typeof document>"u"&&'
+  cat ./public/server.js
+} > ./public/merged.js
+mv ./public/merged.js ./public/server.js
+rm ./public/shared.js
 
-  printf ';' >> ./public/shared.js
+if [[ "${MODE}" == "" || "${MODE}" == "--dist" ]] && [[ "${ROADROLL}" == 1 ]]; then
+  for f in client server; do
+    ./node_modules/.bin/roadroller "./public/${f}.js" -o "./public/${f}.rr.js"
+    mv "./public/${f}.rr.js" "./public/${f}.js"
+  done
+  printf ';' >> ./public/server.js
 fi
 
 cp ./static/index.html ./public/index.html

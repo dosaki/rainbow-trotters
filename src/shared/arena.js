@@ -1,4 +1,4 @@
-import { W, H, HALF, DIRS } from './constants.js';
+import { W, H, HALF, BODY, DIRS } from './constants.js';
 
 export const createArena = () => new Uint8Array(W * H);
 
@@ -34,17 +34,27 @@ export const paintBody = (grid, x, y, id) => {
     }
 };
 
-export const frontier = (x, y, dir) => {
+const perp = (x, y, dir, half) => {
     const [dx, dy] = DIRS[dir];
     const cx = x + dx * (HALF + 1);
     const cy = y + dy * (HALF + 1);
     const px = dy, py = dx;
     const cells = [];
-    for (let k = -HALF; k <= HALF; k++) {
+    for (let k = -half; k <= half; k++) {
         cells.push([cx + px * k, cy + py * k]);
     }
     return cells;
 };
+
+export const frontier = (x, y, dir) => perp(x, y, dir, HALF);
+
+export const canStep = (grid, x, y, dir) => {
+    const [dx, dy] = DIRS[dir];
+    return bodyInBounds(x + dx, y + dy)
+        && !frontier(x, y, dir).some(([cx, cy]) => cellAt(grid, cx, cy) !== 0);
+};
+
+export const swath = (x, y, dir) => perp(x, y, dir, HALF + BODY * 2);
 
 export const spawnSlot = (i, n) => {
     const M = 8;

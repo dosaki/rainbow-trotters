@@ -48,9 +48,8 @@ export const startHarness = async (dir, port = 0) => {
 
     const { sandbox, dispose } = createSandbox({ storage, io });
 
-    const shared = readFileSync(join(dir, 'shared.js'), 'utf8');
     const server = readFileSync(join(dir, 'server.js'), 'utf8');
-    vm.runInNewContext(shared + '\n' + server, sandbox, { filename: 'server.js' });
+    vm.runInNewContext(server, sandbox, { filename: 'server.js' });
 
     const exported = sandbox.module.exports;
     const handler = typeof exported === 'function' ? exported : exported && exported.io;

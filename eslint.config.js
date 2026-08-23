@@ -16,7 +16,7 @@ const BROWSER = {
     join: 'readonly', lcode: 'readonly', ppl: 'readonly', ready: 'readonly',
     quit: 'readonly', bots: 'readonly', botmore: 'readonly', botless: 'readonly',
     map: 'readonly', mapname: 'readonly', imp: 'readonly', mapin: 'readonly',
-    mapadd: 'readonly',
+    mapadd: 'readonly', mute: 'readonly',
 };
 
 const SANDBOX = { ...ES, Buffer: 'readonly', storage: 'readonly', io: 'readonly', module: 'writable' };

@@ -1,5 +1,5 @@
-import { GHOST, BREAK, POWER_TICKS, DIRS, BODY, HALF, WALL } from './constants.js';
-import { idx, inBounds, cellAt, clearCell } from './arena.js';
+import { GHOST, BREAK, POWER_TICKS, WALL } from './constants.js';
+import { idx, inBounds, cellAt, clearCell, swath } from './arena.js';
 
 export const grantPower = (u, type) => {
     u.power = type;
@@ -23,13 +23,8 @@ export const isGhost = (u) => u.power === GHOST;
 export const isBreaking = (u) => u.power === BREAK;
 
 export const breakSwath = (grid, x, y, dir) => {
-    const [dx, dy] = DIRS[dir];
-    const cx = x + dx * (HALF + 1), cy = y + dy * (HALF + 1);
-    const px = dy, py = dx;
-    const reach = HALF + BODY * 2;
     const cleared = [];
-    for (let k = -reach; k <= reach; k++) {
-        const ax = cx + px * k, ay = cy + py * k;
+    for (const [ax, ay] of swath(x, y, dir)) {
         if (!inBounds(ax, ay)) continue;
         const v = cellAt(grid, ax, ay);
         if (v === WALL + 1) continue;

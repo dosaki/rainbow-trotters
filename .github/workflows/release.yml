@@ -1,16 +1,23 @@
-name: size-budget
+name: release
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  budget:
+  release:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Node setup
         uses: actions/setup-node@v4
@@ -22,7 +29,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y advancecomp
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Cache browser
         uses: actions/cache@v4
@@ -41,3 +48,21 @@ jobs:
 
       - name: Verify the game actually boots
         run: node scripts/verify.mjs dist/rainbow-trotters.zip
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          zip=dist/rainbow-trotters.zip
+          size=$(( $(wc -c < "$zip") ))
+
+          last=$(git tag -l 'v[0-9]*' | sed 's/^v//' | grep -E '^[0-9]+$' | sort -n | tail -1 || true)
+          tag="v$(( ${last:-0} + 1 ))"
+
+          git tag "$tag"
+          git push origin "$tag"
+
+          gh release create "$tag" "$zip" \
+            --title "$tag" \
+            --notes "${size} bytes of 13312, $(( 13312 - size )) to spare."

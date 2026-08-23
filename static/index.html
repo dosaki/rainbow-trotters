@@ -32,6 +32,7 @@ font-size:26px;text-shadow:0 2px 10px #000;opacity:0}
 100%{opacity:0;transform:scale(1.1)}}
 #quit.float{position:fixed;top:8px;right:8px;min-width:0;padding:6px 12px;
 font-size:14px;z-index:2}
+#mute{position:fixed;bottom:8px;left:8px;min-width:0;padding:6px 12px;z-index:3}
 #ppl{list-style:none;padding:0;margin:0;text-align:center}
 #imp{gap:8px}
 #mapin{font:12px/1.2 monospace;padding:6px}
@@ -59,8 +60,9 @@ font-size:14px;z-index:2}
 </div>
 
 <button id=quit hidden>Menu</button>
+<button id=mute>🔊</button>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="shared.js" data-keep></script>
+<script src="server.js" data-keep></script>
 <script src="client.js"></script>
 </body></html>
