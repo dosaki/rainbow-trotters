@@ -7,8 +7,9 @@ const RETRIES = 1;
 
 export const createSession = (code, handlers, opts = {}) => {
     const claimMs = opts.claimMs || CLAIM_MS;
-    const seen = new Set();
+    const seen = new Map();
     const remotes = new Map();
+    const gone = new Set();
 
     let host = null;
     let mine = null;
@@ -17,6 +18,7 @@ export const createSession = (code, handlers, opts = {}) => {
     let waiting = false;
     let tries = 0;
     let timer = null;
+    let known = 0;
 
     const deliver = (ev, payload) => {
         const h = handlers[ev];
@@ -34,7 +36,9 @@ export const createSession = (code, handlers, opts = {}) => {
         const player = host.seat({ cid }, who || '');
         if (player) {
             remotes.set(cid, player);
+            return;
         }
+        relay.sendTo(cid, EV.ERR, [ERR.FULL]);
     };
 
     const becomeHost = () => {
@@ -43,8 +47,10 @@ export const createSession = (code, handlers, opts = {}) => {
         waiting = false;
         host = createHost({ relay, code, open: !!opts.open });
         mine = host.seat({ deliver }, joinName);
-        for (const cid of seen) {
-            seatClaim(cid, '');
+        gone.delete(hostCid);
+        host.hold(known - 1 - gone.size, opts.holdMs);
+        for (const [cid, who] of seen) {
+            seatClaim(cid, who);
         }
         seen.clear();
     };
@@ -60,7 +66,7 @@ export const createSession = (code, handlers, opts = {}) => {
 
     const decide = () => {
         if (host || hostCid) return;
-        const beatenBy = [...seen].some((id) => id < relay.id);
+        const beatenBy = [...seen.keys()].some((id) => id < relay.id);
         if (beatenBy && tries < RETRIES) {
             tries++;
             timer = setTimeout(decide, claimMs);
@@ -83,12 +89,24 @@ export const createSession = (code, handlers, opts = {}) => {
     };
 
     const onAny = (ev, payload, from) => {
+        const who = Array.isArray(payload) ? payload[0] : '';
+
         if (ev === EV.CLAIM) {
+            gone.delete(from);
             if (host) {
-                seatClaim(from, Array.isArray(payload) ? payload[0] : '');
+                seatClaim(from, who);
                 return;
             }
-            seen.add(from);
+            seen.set(from, who);
+            return;
+        }
+
+        if (ev === EV.BYE) {
+            gone.add(from);
+            seen.delete(from);
+            if (host) {
+                host.unexpect();
+            }
             return;
         }
 
@@ -111,6 +129,9 @@ export const createSession = (code, handlers, opts = {}) => {
             seen.clear();
             stopTimer();
             waiting = false;
+        }
+        if (ev === EV.STATE && Array.isArray(payload) && Array.isArray(payload[3])) {
+            known = payload[3].length;
         }
         deliver(ev, payload);
     };
@@ -169,6 +190,7 @@ export const createSession = (code, handlers, opts = {}) => {
                 return;
             }
             if (ev === EV.QUIT) {
+                relay.send(EV.BYE, []);
                 stop();
                 return;
             }

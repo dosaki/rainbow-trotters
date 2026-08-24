@@ -12,6 +12,8 @@ export const createRoom = (code = '', open = false) => ({
     relay: null,
     watch: null,
     demo: false,
+    holdUntil: 0,
+    expect: 0,
     solo: false,
     hostId: -1,
     rounds: 0,
@@ -108,6 +110,15 @@ export const setReady = (room, id, on) => {
     if (p && !p.bot) {
         p.ready = !!on;
     }
+};
+
+export const holding = (room, now = Date.now()) => {
+    if (!room.holdUntil) return false;
+    if (room.players.size >= room.expect || now >= room.holdUntil) {
+        room.holdUntil = 0;
+        return false;
+    }
+    return true;
 };
 
 export const allReady = (room) => {
@@ -212,7 +223,7 @@ export const advance = (room) => {
     room.phaseTick++;
 
     if (room.phase === PHASE.LOBBY) {
-        if (allReady(room)) {
+        if (!holding(room) && allReady(room)) {
             startGame(room);
         }
         return;

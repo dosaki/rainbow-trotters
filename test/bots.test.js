@@ -6,7 +6,7 @@ import { rngFrom } from '../src/shared/rng.js';
 import { freeAhead, openness } from '../src/client/host/bots/vision.js';
 import { botInputs } from '../src/client/host/bots/bot.js';
 import { createRoom, addPlayer, addHuman, addBot, startRound, advance, playerList, humansIn } from '../src/client/host/room.js';
-import { MIN_PLAYERS, MAX_PLAYERS, ACTIVATE, GHOST, BODY, W, H, COUNTDOWN_TICKS } from '../src/shared/constants.js';
+import { MIN_PLAYERS, MAX_PLAYERS, ACTIVATE, GHOST, BODY, HALF, LHALF, W, H, COUNTDOWN_TICKS } from '../src/shared/constants.js';
 import { PHASE } from '../src/shared/protocol.js';
 
 const wall = (g, x, y0, y1, id = 5) => {
@@ -17,7 +17,7 @@ const wall = (g, x, y0, y1, id = 5) => {
 
 test('freeAhead counts steps and stops at a wall', () => {
     const g = createArena();
-    wall(g, 13, 30, 50);
+    wall(g, 10 + LHALF + 2, 30, 50);
     assert.equal(freeAhead(g, 10, 40, 0, 10), 1);
 });
 
@@ -25,7 +25,7 @@ test('freeAhead refuses a gap narrower than the body', () => {
     const g = createArena();
     for (let y = 0; y < H; y++) {
         if (y !== 40) {
-            paint(g, 13, y, 5);
+            paint(g, 10 + LHALF + 2, y, 5);
         }
     }
     assert.equal(freeAhead(g, 10, 40, 0, 10), 1, 'a 1-cell hole is not a way through');
@@ -45,7 +45,7 @@ test('openness prefers the roomier side', () => {
 
 test('openness rejects a direction that is blocked right now', () => {
     const g = createArena();
-    wall(g, 12, 30, 50);
+    wall(g, 10 + LHALF + 1, 30, 50);
     assert.equal(openness(g, 10, 40, 0), -1);
 });
 
@@ -82,7 +82,7 @@ test('a bot never chooses an illegal reversal', () => {
 test('a bot spends a banked escape when boxed in, not in open space', () => {
     const boxed = createState(1, [{ id: 0, x: 10, y: 40, dir: 0 }]);
     unicornById(boxed, 0).held = GHOST;
-    wall(boxed.grid, 12, 0, 90);
+    wall(boxed.grid, 10 + LHALF + 1, 0, 90);
     assert.ok(botInputs(boxed, unicornById(boxed, 0), rngFrom(1)).includes(ACTIVATE),
         'should spend an escape with a wall in its face');
 

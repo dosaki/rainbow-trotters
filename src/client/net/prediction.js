@@ -43,7 +43,7 @@ export const createPredictor = (myId) => ({
                 const [dx, dy] = DIRS[p.dir];
                 const nx = p.x + dx, ny = p.y + dy;
                 const front = frontier(p.x, p.y, p.dir);
-                if (!(ghost ? bodyInBounds(nx, ny) : canStep(state.grid, p.x, p.y, p.dir))) {
+                if (!(ghost ? bodyInBounds(nx, ny, p.dir) : canStep(state.grid, p.x, p.y, p.dir))) {
                     p.alive = false;
                     break;
                 }

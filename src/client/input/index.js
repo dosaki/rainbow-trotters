@@ -17,7 +17,7 @@ export const bindInput = (onInput) => {
     bindKeyboard(onInput, allow);
 
     addEventListener('pointerdown', (e) => {
-        if (!allow(e)) return;
+        if (!allow(e) || e.target.tagName === 'BUTTON') return;
         e.preventDefault();
         if (e.clientY > innerHeight * 0.85) {
             onInput(ACTIVATE);

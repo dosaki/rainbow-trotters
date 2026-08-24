@@ -1,5 +1,7 @@
 export const BODY = 3;
 export const HALF = 1;
+export const LONG = 5;
+export const LHALF = 2;
 
 export const W = 224;
 export const H = 224;

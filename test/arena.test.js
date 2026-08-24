@@ -4,7 +4,7 @@ import {
     createArena, idx, inBounds, cellAt, paint, clearCell, clearOwner, hashGrid,
     paintBody, bodyInBounds, frontier,
 } from '../src/shared/arena.js';
-import { W, H, BODY, HALF } from '../src/shared/constants.js';
+import { W, H, BODY, HALF, LHALF } from '../src/shared/constants.js';
 
 test('a fresh arena is empty', () => {
     const g = createArena();
@@ -44,37 +44,50 @@ test('clearOwner removes only that player and reports what it cleared', () => {
     assert.equal(cellAt(g, 2, 0), 6);
 });
 
-test('paintBody fills the whole BODY x BODY footprint', () => {
+test('paintBody fills the oriented footprint, long along travel', () => {
     const g = createArena();
-    paintBody(g, 50, 60, 2);
+    paintBody(g, 50, 60, 2, 0);
     for (let y = 60 - HALF; y <= 60 + HALF; y++) {
-        for (let x = 50 - HALF; x <= 50 + HALF; x++) {
+        for (let x = 50 - LHALF; x <= 50 + LHALF; x++) {
             assert.equal(cellAt(g, x, y), 3, `(${x},${y})`);
         }
     }
-    assert.equal(cellAt(g, 50 + HALF + 1, 60), 0, 'and nothing outside it');
+    assert.equal(cellAt(g, 50 + LHALF + 1, 60), 0, 'nothing beyond the nose');
+    assert.equal(cellAt(g, 50, 60 + HALF + 1), 0, 'nothing beyond the flank');
+
+    const v = createArena();
+    paintBody(v, 50, 60, 2, 1);
+    assert.equal(cellAt(v, 50, 60 + LHALF), 3, 'facing down, the long axis is vertical');
+    assert.equal(cellAt(v, 50 + LHALF, 60), 0, 'and the flank is only BODY wide');
 });
 
 test('bodyInBounds requires the whole body to fit, not just the centre', () => {
-    assert.equal(bodyInBounds(HALF, HALF), true);
-    assert.equal(bodyInBounds(HALF - 1, HALF), false);
-    assert.equal(bodyInBounds(W - 1 - HALF, H - 1 - HALF), true);
-    assert.equal(bodyInBounds(W - HALF, H - 1 - HALF), false);
+    assert.equal(bodyInBounds(LHALF, HALF, 0), true);
+    assert.equal(bodyInBounds(LHALF - 1, HALF, 0), false);
+    assert.equal(bodyInBounds(W - 1 - LHALF, H - 1 - HALF, 0), true);
+    assert.equal(bodyInBounds(W - LHALF, H - 1 - HALF, 0), false);
+
+    assert.equal(bodyInBounds(HALF, LHALF, 1), true);
+    assert.equal(bodyInBounds(HALF - 1, LHALF, 1), false, 'turning sideways needs flank room');
+    assert.equal(bodyInBounds(HALF, LHALF - 1, 1), false);
 });
 
 test('the frontier is a BODY-long line one step ahead of the leading face', () => {
-    const right = frontier(50, 60, 0);
-    assert.equal(right.length, BODY);
-    assert.deepEqual(right, [[52, 59], [52, 60], [52, 61]]);
+    for (const [dir, dx, dy] of [[0, 1, 0], [1, 0, 1], [2, -1, 0], [3, 0, -1]]) {
+        const line = frontier(50, 60, dir);
+        assert.equal(line.length, BODY, `dir ${dir} should be BODY cells wide`);
 
-    const down = frontier(50, 60, 1);
-    assert.deepEqual(down, [[49, 62], [50, 62], [51, 62]]);
-
-    const left = frontier(50, 60, 2);
-    assert.deepEqual(left, [[48, 61], [48, 60], [48, 59]]);
-
-    const up = frontier(50, 60, 3);
-    assert.deepEqual(up, [[51, 58], [50, 58], [49, 58]]);
+        const ahead = LHALF + 1;
+        const sides = new Set();
+        for (const [cx, cy] of line) {
+            assert.equal((cx - 50) * dx + (cy - 60) * dy, ahead,
+                `(${cx},${cy}) is not one step ahead of the leading face`);
+            sides.add((cx - 50) * dy + (cy - 60) * -dx);
+        }
+        assert.equal(sides.size, BODY, 'the line covers each flank offset exactly once');
+        assert.equal(Math.min(...sides), -HALF);
+        assert.equal(Math.max(...sides), HALF);
+    }
 });
 
 test('the frontier never overlaps the body it came from', () => {

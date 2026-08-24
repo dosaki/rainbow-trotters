@@ -1,4 +1,4 @@
-export { BODY, HALF, W, H, TICK_MS, DECAY_TICKS, FADE_TICKS, MAX_PLAYERS, COUNTDOWN_TICKS, RESULTS_TICKS, TURN_WINDOW, DIRS, HUES, GHOST, BREAK, SPEED, ACTIVATE, WINS_TO_TAKE, MAX_ROUNDS, SOLO_BOTS, WALL } from './constants.js';
+export { BODY, HALF, LONG, LHALF, W, H, TICK_MS, DECAY_TICKS, FADE_TICKS, MAX_PLAYERS, COUNTDOWN_TICKS, RESULTS_TICKS, TURN_WINDOW, DIRS, HUES, GHOST, BREAK, SPEED, ACTIVATE, WINS_TO_TAKE, MAX_ROUNDS, SOLO_BOTS, WALL } from './constants.js';
 export { rngFrom, rngInt } from './rng.js';
 export { bodyInBounds, frontier, canStep } from './arena.js';
 export { isLegalTurn, applyTurn, stepsThisTick } from './unicorn.js';

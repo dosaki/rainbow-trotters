@@ -150,11 +150,11 @@ test('when two unicorns cover one sparkle, the nearer one takes it', () => {
 test('an exact tie goes to the lower id, whatever order they are listed in', () => {
     const build = (forward) => {
         const spawns = [
-            { id: 0, x: 10, y: 40, dir: 0 },
-            { id: 1, x: 16, y: 40, dir: 2 },
+            { id: 0, x: 10, y: 40 - PICKUP_REACH, dir: 0 },
+            { id: 1, x: 10, y: 40 + PICKUP_REACH, dir: 0 },
         ];
         const s = createState(5, forward ? spawns : [...spawns].reverse());
-        s.sparkles.push({ i: 1, x: 13, y: 40, type: SPEED });
+        s.sparkles.push({ i: 1, x: 11, y: 40, type: SPEED });
         step(s);
         return s;
     };

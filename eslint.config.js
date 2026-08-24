@@ -9,7 +9,7 @@ const BROWSER = {
     addEventListener: 'readonly', requestAnimationFrame: 'readonly',
     innerWidth: 'readonly', innerHeight: 'readonly',
     localStorage: 'readonly', AudioContext: 'readonly',
-    WebSocket: 'readonly', navigator: 'readonly', getSelection: 'readonly',
+    WebSocket: 'readonly', navigator: 'readonly', getSelection: 'readonly', matchMedia: 'readonly',
     io: 'readonly',
     c: 'readonly', h: 'readonly', o: 'readonly', n: 'readonly', t: 'readonly',
     menu: 'readonly', lobby: 'readonly', err: 'readonly', nm: 'readonly',
@@ -17,7 +17,7 @@ const BROWSER = {
     join: 'readonly', lcode: 'readonly', ppl: 'readonly', ready: 'readonly',
     quit: 'readonly', bots: 'readonly', botmore: 'readonly', botless: 'readonly',
     map: 'readonly', mapname: 'readonly', imp: 'readonly', mapin: 'readonly',
-    mapadd: 'readonly', mute: 'readonly', lc: 'readonly', cpy: 'readonly', lclab: 'readonly', lcrow: 'readonly',
+    mapadd: 'readonly', mute: 'readonly', lc: 'readonly', cpy: 'readonly', lclab: 'readonly', lcrow: 'readonly', hint: 'readonly',
 };
 
 const SANDBOX = { ...ES, Buffer: 'readonly', storage: 'readonly', io: 'readonly', module: 'writable' };

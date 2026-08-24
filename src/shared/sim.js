@@ -1,5 +1,5 @@
 import { DIRS, ACTIVATE, BODY, DECAY_TICKS, ROUND_CAP_TICKS, WALL, BLAST } from './constants.js';
-import { createArena, cellAt, paint, paintBody, bodyInBounds, frontier, clearOwner, inBounds, clearCell, idx } from './arena.js';
+import { createArena, cellAt, paint, paintBody, bodyInBounds, halfSpan, frontier, clearOwner, inBounds, clearCell, idx } from './arena.js';
 import { rngFrom } from './rng.js';
 import { createUnicorn, applyTurn, stepsThisTick } from './unicorn.js';
 import { expirePower, isGhost, isBreaking, breakSwath, usePower } from './powers.js';
@@ -11,7 +11,7 @@ export const createState = (seed, spawns, map = null) => {
     paintMap(grid, map);
     const unicorns = spawns.map((s) => createUnicorn(s.id, s.x, s.y, s.dir));
     for (const u of unicorns) {
-        paintBody(grid, u.x, u.y, u.id);
+        paintBody(grid, u.x, u.y, u.id, u.dir);
     }
     return {
         tick: 0,
@@ -65,7 +65,7 @@ const subStep = (s, movers) => {
     const doomed = new Set();
 
     for (const m of moves) {
-        if (!bodyInBounds(m.nx, m.ny)) {
+        if (!bodyInBounds(m.nx, m.ny, m.u.dir)) {
             doomed.add(m.u.id);
             continue;
         }
@@ -83,7 +83,8 @@ const subStep = (s, movers) => {
     for (let i = 0; i < moves.length; i++) {
         for (let j = i + 1; j < moves.length; j++) {
             const a = moves[i], b = moves[j];
-            const overlap = Math.abs(a.nx - b.nx) < BODY && Math.abs(a.ny - b.ny) < BODY;
+            const [aex, aey] = halfSpan(a.u.dir), [bex, bey] = halfSpan(b.u.dir);
+            const overlap = Math.abs(a.nx - b.nx) <= aex + bex && Math.abs(a.ny - b.ny) <= aey + bey;
             if (!overlap) continue;
             if (!isGhost(a.u)) {
                 doomed.add(a.u.id);

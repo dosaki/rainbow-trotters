@@ -7,8 +7,9 @@ import { keyToInput, relativeTurn } from '../src/client/input/keyboard.js';
 import { isTypingTarget } from '../src/client/input/index.js';
 import { createArena, paintBody, paint, idx } from '../src/shared/arena.js';
 import { drawPowerRing } from '../src/client/render/effects.js';
+import { drawUnicorn } from '../src/client/render/unicorns.js';
 import { GHOST, TICK_MS } from '../src/shared/constants.js';
-import { MAX_PLAYERS, FADE_TICKS, BODY, HALF, W, ACTIVATE, WALL } from '../src/shared/constants.js';
+import { MAX_PLAYERS, FADE_TICKS, BODY, LONG, HALF, W, ACTIVATE, WALL } from '../src/shared/constants.js';
 
 const fakeFactory = () => {
     const ops = [];
@@ -88,14 +89,14 @@ test('repaintFromGrid redraws every painted cell on its owner layer', () => {
     const f = fakeFactory();
     const layers = createLayers(f.make);
     const grid = createArena();
-    paintBody(grid, 50, 50, 0);
-    paintBody(grid, 90, 90, 3);
+    paintBody(grid, 50, 50, 0, 0);
+    paintBody(grid, 90, 90, 3, 1);
     f.ops.length = 0;
     repaintFromGrid(layers, grid, () => 200);
     const clears = f.ops.filter(([op]) => op === 'clear').length;
     const fills = f.ops.filter(([op]) => op === 'fill').length;
     assert.equal(clears, MAX_PLAYERS + 1, 'every layer, map included, is wiped first');
-    assert.equal(fills, BODY * BODY * 2, 'and every painted cell is restored');
+    assert.equal(fills, LONG * BODY * 2, 'and every painted cell is restored');
 });
 
 test('arrow keys, WASD and space map to inputs', () => {
@@ -151,14 +152,14 @@ const ringCtx = () => {
     const at = [];
     const ctx = {
         strokeStyle: '', lineWidth: 0, globalAlpha: 1, shadowColor: '', shadowBlur: 0,
-        strokeRect: () => at.push({ alpha: ctx.globalAlpha }),
+        strokeRect: (x, y, w, h) => at.push({ alpha: ctx.globalAlpha, x, y, w, h }),
     };
     return { ctx, at };
 };
 
 const ringAt = (left) => {
     const { ctx, at } = ringCtx();
-    drawPowerRing(ctx, 50, 50, GHOST, left);
+    drawPowerRing(ctx, 50, 50, 0, GHOST, left);
     return at[0];
 };
 
@@ -185,6 +186,69 @@ test('the power ring pulses and fades through the final second', () => {
 test('the power ring leaves no alpha behind', () => {
     // Without this everything drawn after a dying ring would fade too.
     const { ctx } = ringCtx();
-    drawPowerRing(ctx, 50, 50, GHOST, 3);
+    drawPowerRing(ctx, 50, 50, 0, GHOST, 3);
     assert.equal(ctx.globalAlpha, 1);
+});
+
+test('the power ring is a rectangle that turns with the unicorn', () => {
+    const box = (dir) => {
+        const { ctx, at } = ringCtx();
+        drawPowerRing(ctx, 50, 50, dir, GHOST, 999);
+        return at[0];
+    };
+
+    for (const dir of [0, 2]) {
+        const r = box(dir);
+        assert.ok(r.w > r.h, `facing ${dir} the ring should be longer than it is wide`);
+    }
+    for (const dir of [1, 3]) {
+        const r = box(dir);
+        assert.ok(r.h > r.w, `facing ${dir} the ring should be taller than it is wide`);
+    }
+
+    const across = box(0);
+    const along = box(1);
+    assert.equal(across.w, along.h, 'the long side is the same whichever way it points');
+    assert.equal(across.h, along.w, 'and so is the short side');
+
+    assert.ok(across.w > LONG, 'the ring clears the body it surrounds');
+    assert.ok(across.h > BODY, 'on both axes');
+});
+
+const spriteBox = (dir) => {
+    const ops = [];
+    const ctx = {
+        fillStyle: '', strokeStyle: '', lineWidth: 0, globalAlpha: 1,
+        fillRect: (x, y, w, h) => ops.push([x, y, w, h]),
+        strokeRect: () => {},
+    };
+    drawUnicorn(ctx, 50, 60, dir, 200, false);
+    return {
+        x0: Math.min(...ops.map((o) => o[0])),
+        x1: Math.max(...ops.map((o) => o[0] + o[2])),
+        y0: Math.min(...ops.map((o) => o[1])),
+        y1: Math.max(...ops.map((o) => o[1] + o[3])),
+    };
+};
+
+test('the unicorn is centred across its own trail, not half a cell off it', () => {
+    const midX = 50 - HALF + BODY / 2;
+    const midY = 60 - HALF + BODY / 2;
+
+    for (const dir of [0, 2]) {
+        const b = spriteBox(dir);
+        assert.equal((b.y0 + b.y1) / 2, midY,
+            `facing ${dir}, the sprite sits off the band it paints`);
+    }
+    for (const dir of [1, 3]) {
+        const b = spriteBox(dir);
+        assert.equal((b.x0 + b.x1) / 2, midX,
+            `facing ${dir}, the sprite sits off the band it paints`);
+    }
+});
+
+test('the unicorn covers the full width of the trail it lays', () => {
+    const across = spriteBox(0);
+    assert.ok(across.y0 <= 60 - HALF, 'the coat reaches the top edge of its trail');
+    assert.ok(across.y1 >= 60 - HALF + BODY, 'and the bottom edge');
 });

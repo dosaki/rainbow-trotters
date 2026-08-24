@@ -52,6 +52,10 @@ font-size:26px;text-shadow:0 2px 10px #000;opacity:0}
 #quit.float{position:fixed;top:8px;right:8px;min-width:0;padding:6px 12px;
 font-size:14px;z-index:2}
 #mute{position:fixed;bottom:8px;left:8px;min-width:0;padding:6px 12px;z-index:3}
+#hint{position:fixed;left:0;right:0;bottom:0;height:15%;pointer-events:none;z-index:1;
+display:flex;align-items:flex-start;justify-content:center;padding-top:6px;
+font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#ffffff99;
+border-top:1px solid #ffffff26;background:linear-gradient(#ffffff00,#a29bfe1f)}
 #ppl{list-style:none;padding:0;margin:0;text-align:center}
 #lc{display:flex;flex-direction:column;align-items:center;gap:6px}
 #lcrow{display:flex;align-items:center;gap:14px;padding:10px 12px 10px 20px;
@@ -69,7 +73,7 @@ box-shadow:0 0 20px #a29bfe33}
 #mapin{font:12px/1.2 monospace;padding:6px}
 </style></head><body>
 <div id=w><canvas id=c></canvas><div id=n></div></div>
-<div id=h></div><div id=o></div><div id=t></div>
+<div id=h></div><div id=o></div><div id=t></div><div id=hint hidden>Tap to use</div>
 
 <div class=p id=menu>
   <h1 id=ttl>Rainbow Trotters</h1>

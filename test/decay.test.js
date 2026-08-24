@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createState, tickSim, roundResult, unicornById } from '../src/shared/sim.js';
 import { cellAt, idx, paint } from '../src/shared/arena.js';
-import { DECAY_TICKS, ROUND_CAP_TICKS, BLAST, WALL } from '../src/shared/constants.js';
+import { DECAY_TICKS, ROUND_CAP_TICKS, BLAST, WALL, BODY, HALF, LHALF } from '../src/shared/constants.js';
 
 const dieImmediately = () => {
     const s = createState(1, [{ id: 0, x: 1, y: 40, dir: 2 }]);
@@ -112,9 +112,10 @@ test('the cap does not fire before its time', () => {
 });
 
 const dieAt = (x, y, prep) => {
-    const s = createState(1, [{ id: 0, x: x + 2, y, dir: 0 }]);
-    for (let ax = x + 2; ax <= x + 4; ax++) {
-        for (let ay = y - 1; ay <= y + 1; ay++) {
+    const s = createState(1, [{ id: 0, x, y, dir: 0 }]);
+    const face = x + LHALF + 1;
+    for (let ax = face; ax <= face + BODY; ax++) {
+        for (let ay = y - BODY; ay <= y + BODY; ay++) {
             paint(s.grid, ax, ay, 3);
         }
     }

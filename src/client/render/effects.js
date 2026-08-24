@@ -1,4 +1,4 @@
-import { DIRS, BODY, HALF, GHOST, BREAK, SPEED, TICK_MS } from '#shared';
+import { DIRS, BODY, HALF, LHALF, GHOST, BREAK, SPEED, TICK_MS } from '#shared';
 
 const WARN = 1000 / TICK_MS;
 
@@ -12,20 +12,23 @@ export const drawSparkle = (ctx, sp, tick) => {
     ctx.globalAlpha = 1;
 };
 
-export const drawPowerRing = (ctx, x, y, power, left) => {
+export const drawPowerRing = (ctx, x, y, dir, power, left) => {
+    const [dx] = DIRS[dir];
+    const ex = (dx ? LHALF : HALF) + 1.5;
+    const ey = (dx ? HALF : LHALF) + 1.5;
     ctx.strokeStyle = POWER_COLOUR[power] || '#fff';
     ctx.lineWidth = 1;
     if (left <= WARN) {
         ctx.globalAlpha = (left / WARN) * 0.45 + 0.55 * (0.55 + 0.45 * Math.cos(left * 0.45));
     }
-    ctx.strokeRect(x - HALF - 2.5, y - HALF - 2.5, BODY + 5, BODY + 5);
+    ctx.strokeRect(x + 0.5 - ex, y + 0.5 - ey, ex * 2, ey * 2);
     ctx.globalAlpha = 1;
 };
 
 export const drawBoost = (ctx, x, y, dir) => {
     const [dx, dy] = DIRS[dir];
     ctx.fillStyle = 'rgba(255,255,255,.4)';
-    for (let k = HALF + 1; k < HALF + 6; k++) {
+    for (let k = LHALF + 1; k < LHALF + 6; k++) {
         ctx.fillRect(x - dx * k, y - dy * k, 1, 1);
     }
 };

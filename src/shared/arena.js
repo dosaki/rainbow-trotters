@@ -1,4 +1,4 @@
-import { W, H, HALF, BODY, DIRS } from './constants.js';
+import { W, H, HALF, BODY, LHALF, DIRS } from './constants.js';
 
 export const createArena = () => new Uint8Array(W * H);
 
@@ -23,12 +23,20 @@ export const clearOwner = (grid, id) => {
     return cleared;
 };
 
-export const bodyInBounds = (x, y) =>
-    x - HALF >= 0 && x + HALF < W && y - HALF >= 0 && y + HALF < H;
+export const halfSpan = (dir) => {
+    if (dir === undefined) return [LHALF, LHALF];
+    return DIRS[dir][0] ? [LHALF, HALF] : [HALF, LHALF];
+};
 
-export const paintBody = (grid, x, y, id) => {
-    for (let oy = -HALF; oy <= HALF; oy++) {
-        for (let ox = -HALF; ox <= HALF; ox++) {
+export const bodyInBounds = (x, y, dir) => {
+    const [ex, ey] = halfSpan(dir);
+    return x - ex >= 0 && x + ex < W && y - ey >= 0 && y + ey < H;
+};
+
+export const paintBody = (grid, x, y, id, dir) => {
+    const [ex, ey] = halfSpan(dir);
+    for (let oy = -ey; oy <= ey; oy++) {
+        for (let ox = -ex; ox <= ex; ox++) {
             grid[(y + oy) * W + (x + ox)] = id + 1;
         }
     }
@@ -36,8 +44,8 @@ export const paintBody = (grid, x, y, id) => {
 
 const perp = (x, y, dir, half) => {
     const [dx, dy] = DIRS[dir];
-    const cx = x + dx * (HALF + 1);
-    const cy = y + dy * (HALF + 1);
+    const cx = x + dx * (LHALF + 1);
+    const cy = y + dy * (LHALF + 1);
     const px = dy, py = dx;
     const cells = [];
     for (let k = -half; k <= half; k++) {
@@ -50,7 +58,7 @@ export const frontier = (x, y, dir) => perp(x, y, dir, HALF);
 
 export const canStep = (grid, x, y, dir) => {
     const [dx, dy] = DIRS[dir];
-    return bodyInBounds(x + dx, y + dy)
+    return bodyInBounds(x + dx, y + dy, dir)
         && !frontier(x, y, dir).some(([cx, cy]) => cellAt(grid, cx, cy) !== 0);
 };
 

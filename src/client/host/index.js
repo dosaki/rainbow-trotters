@@ -7,6 +7,7 @@ import { scheduleTurn, helloPayload } from './authority.js';
 import { broadcast, sendTo } from './broadcast.js';
 
 const CATCH_UP = 5;
+const HOLD_MS = 10000;
 const DRIFT_LIMIT = 20;
 
 export const createHost = (opts = {}) => {
@@ -106,6 +107,14 @@ export const createHost = (opts = {}) => {
         seat,
         leave,
         input,
+        hold: (count, ms = HOLD_MS) => {
+            if (count < 2) return;
+            room.expect = count;
+            room.holdUntil = Date.now() + ms;
+        },
+        unexpect: () => {
+            room.expect = Math.max(0, room.expect - 1);
+        },
         stop: () => clearInterval(timer),
     };
 };

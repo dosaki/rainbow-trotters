@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createState, tickSim, aliveCount, unicornById } from '../src/shared/sim.js';
 import { cellAt } from '../src/shared/arena.js';
-import { W, H, BODY, HALF, STEP_COST, STEP_GAIN, TICK_MS } from '../src/shared/constants.js';
+import { W, H, BODY, HALF, LHALF, STEP_COST, STEP_GAIN, TICK_MS } from '../src/shared/constants.js';
 
 const STEP_TICKS = STEP_COST / STEP_GAIN;
 
@@ -50,12 +50,12 @@ test('the trail is a continuous band with no gaps behind the body', () => {
     run(s, 8);
     const u = unicornById(s, 0);
     assert.equal(u.x, 10 + 8 / STEP_TICKS);
-    for (let x = 9; x <= u.x + 1; x++) {
-        for (let y = 9; y <= 11; y++) {
+    for (let x = 10 - LHALF; x <= u.x + LHALF; x++) {
+        for (let y = 10 - HALF; y <= 10 + HALF; y++) {
             assert.equal(cellAt(s.grid, x, y), 1, `band cell (${x},${y})`);
         }
     }
-    assert.equal(cellAt(s.grid, u.x + 2, 10), 0, 'and nothing painted beyond it');
+    assert.equal(cellAt(s.grid, u.x + LHALF + 1, 10), 0, 'and nothing painted beyond it');
 });
 
 test('turns apply at the start of the tick they arrive on', () => {
@@ -87,22 +87,24 @@ test('looping back into your own band kills you', () => {
 });
 
 test('the whole body must fit inside the arena, not just the centre', () => {
-    const s = createState(1, [{ id: 0, x: W - 3, y: 5, dir: 0 }]);
+    const last = W - 1 - LHALF;
+    const s = createState(1, [{ id: 0, x: last - 1, y: LHALF + 3, dir: 0 }]);
     run(s, STEP_TICKS);
-    assert.equal(unicornById(s, 0).alive, true, 'centre W-2 still fits');
-    assert.equal(unicornById(s, 0).x, W - 2);
+    assert.equal(unicornById(s, 0).alive, true, `centre ${last} still fits`);
+    assert.equal(unicornById(s, 0).x, last);
     run(s, STEP_TICKS);
-    assert.equal(unicornById(s, 0).alive, false, 'centre W-1 would hang the body over the edge');
+    assert.equal(unicornById(s, 0).alive, false, 'one more would hang the body over the edge');
     assert.equal(aliveCount(s), 0);
 });
 
 test('two unicorns whose bodies overlap both die, even landing on different cells', () => {
+    const gap = LHALF * 2 + 3;
     const s = createState(1, [
         { id: 0, x: 10, y: 40, dir: 0 },
-        { id: 1, x: 16, y: 40, dir: 2 },
+        { id: 1, x: 10 + gap, y: 40, dir: 2 },
     ]);
     run(s, STEP_TICKS);
-    assert.equal(unicornById(s, 0).alive, true, 'centres 11 and 15 are still clear');
+    assert.equal(unicornById(s, 0).alive, true, 'one step apart they are still clear');
     assert.equal(unicornById(s, 1).alive, true);
     run(s, STEP_TICKS);
     assert.equal(unicornById(s, 0).alive, false);

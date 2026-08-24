@@ -1,4 +1,4 @@
-import { EV, MODE, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, parseMap } from '#shared';
+import { EV, MODE, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, W, H, parseMap } from '#shared';
 import { startPinging } from './net/relay.js';
 import { createLocalHost } from './host/local.js';
 import { createSession } from './host/session.js';
@@ -101,6 +101,8 @@ const startDemo = () => {
         [EV.TICK]: (p) => net.pushTick(p[0], p[1]),
     });
 };
+
+const TOUCH = matchMedia('(pointer:coarse)').matches;
 
 const AUTO_ROOM = 'PLAY';
 const RELAY = location.hostname === 'localhost' ? `ws://${location.host}` : undefined;
@@ -219,7 +221,7 @@ const applyTick = () => {
         sfx('pickup');
         const mine = net.me();
         if (mine && mine.held) {
-            showToast(`${POWER_NAME[mine.held]} · press SPACE`);
+            showToast(`${POWER_NAME[mine.held]} · ${TOUCH ? 'tap below' : 'press SPACE'}`);
         }
     }
 };
@@ -257,6 +259,9 @@ const frame = () => {
         audio();
         shell();
     }
+    const held = net.myId >= 0 && net.state ? net.me() : null;
+    hint.hidden = !(TOUCH && net.phase === PHASE.RACE && held && held.held);
+
     if (net.phase === PHASE.LOBBY) return;
     if (!net.state) {
         if (net.myId < 0) {
@@ -268,7 +273,7 @@ const frame = () => {
     const s = net.state;
 
     ctx.fillStyle = '#0d0620';
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillRect(0, 0, W, H);
     composite(ctx, layers, s.tick);
 
     for (const sp of s.sparkles) {
@@ -292,7 +297,7 @@ const frame = () => {
         const power = me && predicting ? p.power : u.power;
         const left = me && predicting ? p.powerTicks : u.powerTicks;
         if (power) {
-            drawPowerRing(ctx, p.x, p.y, power, left);
+            drawPowerRing(ctx, p.x, p.y, p.dir, power, left);
         }
         if (power === SPEED) {
             drawBoost(ctx, p.x, p.y, p.dir);
