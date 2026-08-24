@@ -20,26 +20,13 @@ rm -rf ./public && mkdir -p ./public
 ./node_modules/.bin/webpack
 
 if [[ "${MODE}" != "--dev" ]]; then
-  for f in shared server client; do
-    ./node_modules/.bin/terser "./public/${f}.js" -c -m -o "./public/${f}.tmp.js"
-    mv "./public/${f}.tmp.js" "./public/${f}.js"
-  done
+  ./node_modules/.bin/terser ./public/client.js -c -m -o ./public/client.tmp.js
+  mv ./public/client.tmp.js ./public/client.js
 fi
 
-{
-  cat ./public/shared.js
-  printf ';typeof document>"u"&&'
-  cat ./public/server.js
-} > ./public/merged.js
-mv ./public/merged.js ./public/server.js
-rm ./public/shared.js
-
 if [[ "${MODE}" == "" || "${MODE}" == "--dist" ]] && [[ "${ROADROLL}" == 1 ]]; then
-  for f in client server; do
-    ./node_modules/.bin/roadroller "./public/${f}.js" -o "./public/${f}.rr.js"
-    mv "./public/${f}.rr.js" "./public/${f}.js"
-  done
-  printf ';' >> ./public/server.js
+  ./node_modules/.bin/roadroller ./public/client.js -o ./public/client.rr.js
+  mv ./public/client.rr.js ./public/client.js
 fi
 
 cp ./static/index.html ./public/index.html

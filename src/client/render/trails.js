@@ -11,7 +11,7 @@ export const createLayers = (make) =>
 const fill = (layers, id, hue) => {
     const l = layers[id];
     if (!l) return null;
-    l.ctx.fillStyle = id === WALL ? '#45457d' : `hsl(${hue} 90% 58%)`;
+    l.ctx.fillStyle = id === WALL ? '#4d3d80' : `hsl(${hue} 90% 58%)`;
     return l;
 };
 

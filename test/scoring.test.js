@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     createRoom, addPlayer, addBot, startRound, advance, awardRound, gameResult,
-} from '../src/server/room.js';
+} from '../src/client/host/room.js';
 import { WINS_TO_TAKE, MAX_ROUNDS, COUNTDOWN_TICKS } from '../src/shared/constants.js';
 
 const raced = () => {

@@ -2,24 +2,43 @@
 <meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Rainbow Trotters</title>
 <style>
-body{margin:0;height:100vh;background:#04040a;overflow:hidden;
+body{margin:0;height:100vh;background:#06030f;overflow:hidden;
 font:600 16px/1.3 system-ui,sans-serif;color:#fff;touch-action:none}
 body,#o,.p,#imp{display:flex;align-items:center;justify-content:center}
 #o,.p{position:fixed;inset:0}
 [hidden]{display:none!important}
-#c{display:block;image-rendering:pixelated;border:2px solid #45457d;
-box-sizing:border-box}
+#c{display:block;image-rendering:pixelated;border:2px solid transparent;
+border-image:linear-gradient(120deg,#ff5f6d,#ffc371,#7bed9f,#70a1ff,#a29bfe,#fd79a8) 1;
+box-sizing:border-box;box-shadow:0 0 30px #7f5af044}
 #o{text-align:center;pointer-events:none;text-shadow:0 2px 8px #000}
 #h{position:fixed;top:8px;left:8px;font-size:14px;opacity:.85}
 #w{position:relative}
 #n{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 #n div{position:absolute;font-size:12px;white-space:nowrap;
 text-shadow:0 1px 3px #000;transform:translate(-50%,-16px)}
-.p{flex-direction:column;gap:10px;background:#04040a}
+.p{flex-direction:column;gap:10px;background:#06030fb8;backdrop-filter:blur(3px)}
+#menu{gap:12px}
+#ttl{margin:0;font-size:clamp(30px,8vw,48px);letter-spacing:1px;
+background:linear-gradient(90deg,#ff5f6d,#ffc371,#7bed9f,#70a1ff,#a29bfe,#fd79a8,#ff5f6d);
+background-size:200% 100%;background-clip:text;-webkit-background-clip:text;
+color:transparent;animation:rb 9s linear infinite}
+@keyframes rb{to{background-position:200% 0}}
 button,input,textarea{font:inherit;padding:10px 16px;border-radius:8px;border:0}
-button{background:#2a2a44;color:#fff;cursor:pointer;min-width:220px}
-button:hover{background:#3a3a5e}
-input,#mapin{background:#15152a;color:#fff}
+button{background:#221d3d;color:#fff;cursor:pointer;min-width:220px;
+border:2px solid #ffffff1f}
+button:hover{border-color:transparent;animation:hue 3s linear infinite;
+background:linear-gradient(#2a2450,#2a2450) padding-box,
+linear-gradient(90deg,#ff5f6d,#ffc371,#7bed9f,#70a1ff,#a29bfe,#fd79a8) border-box;
+box-shadow:0 0 14px #a29bfe44}
+button:focus-visible{outline:2px solid #7bed9f;outline-offset:2px}
+#auto{border-color:transparent;color:#180f2e;text-shadow:none;
+background:linear-gradient(90deg,#ff5f6d,#ffc371,#7bed9f,#70a1ff,#a29bfe,#fd79a8,#ff5f6d);
+background-size:200% 100%}
+#auto:hover{background-size:100% 100%;animation:hue 3s linear infinite;
+box-shadow:0 0 20px #a29bfe77}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+@media(prefers-reduced-motion){#ttl,button:hover,#auto:hover{animation:none}}
+input,#mapin{background:#120e26;color:#fff;border:1px solid #ffffff1f}
 input{text-align:center;min-width:200px}
 #err{color:#f9c;min-height:1.2em}
 #t{position:fixed;top:36%;left:0;right:0;text-align:center;pointer-events:none;
@@ -34,6 +53,18 @@ font-size:26px;text-shadow:0 2px 10px #000;opacity:0}
 font-size:14px;z-index:2}
 #mute{position:fixed;bottom:8px;left:8px;min-width:0;padding:6px 12px;z-index:3}
 #ppl{list-style:none;padding:0;margin:0;text-align:center}
+#lc{display:flex;flex-direction:column;align-items:center;gap:6px}
+#lcrow{display:flex;align-items:center;gap:14px;padding:10px 12px 10px 20px;
+border:2px solid transparent;border-radius:12px;
+background:linear-gradient(#161233,#161233) padding-box,
+linear-gradient(90deg,#ff5f6d,#ffc371,#7bed9f,#70a1ff,#a29bfe,#fd79a8) border-box;
+box-shadow:0 0 20px #a29bfe33}
+#lclab{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#a29bfe}
+#lc.solo #lclab{display:none}
+#lcode{font:700 36px/1 ui-monospace,monospace;letter-spacing:9px;margin-right:-9px;color:#fff}
+#lc.solo #lcrow{padding:0;border:0;background:none;box-shadow:none}
+#lc.solo #lcode{font:inherit;letter-spacing:0;margin:0}
+#cpy{min-width:0;padding:8px 14px;font-size:14px}
 #imp{gap:8px}
 #mapin{font:12px/1.2 monospace;padding:6px}
 </style></head><body>
@@ -41,6 +72,7 @@ font-size:14px;z-index:2}
 <div id=h></div><div id=o></div><div id=t></div>
 
 <div class=p id=menu>
+  <h1 id=ttl>Rainbow Trotters</h1>
   <input id=nm maxlength=12 placeholder="Your name">
   <button id=solo>Single-player</button>
   <button id=auto>Auto-join</button>
@@ -50,7 +82,8 @@ font-size:14px;z-index:2}
 </div>
 
 <div class=p id=lobby hidden>
-  <div id=lcode></div>
+  <div id=lc><span id=lclab>Lobby code</span>
+    <span id=lcrow><span id=lcode></span><button id=cpy>Copy</button></span></div>
   <ul id=ppl></ul>
   <button id=map hidden></button>
   <div id=mapname></div>
@@ -62,7 +95,5 @@ font-size:14px;z-index:2}
 <button id=quit hidden>Menu</button>
 <button id=mute>🔊</button>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="server.js" data-keep></script>
 <script src="client.js"></script>
 </body></html>

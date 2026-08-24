@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { createState, tickSim, unicornById, aliveCount } from '../src/shared/sim.js';
 import { createArena, paint, spawnSlot } from '../src/shared/arena.js';
 import { rngFrom } from '../src/shared/rng.js';
-import { freeAhead, openness } from '../src/server/bots/vision.js';
-import { botInputs } from '../src/server/bots/bot.js';
-import { createRoom, addPlayer, addHuman, addBot, startRound, advance, playerList, humansIn } from '../src/server/room.js';
+import { freeAhead, openness } from '../src/client/host/bots/vision.js';
+import { botInputs } from '../src/client/host/bots/bot.js';
+import { createRoom, addPlayer, addHuman, addBot, startRound, advance, playerList, humansIn } from '../src/client/host/room.js';
 import { MIN_PLAYERS, MAX_PLAYERS, ACTIVATE, GHOST, BODY, W, H, COUNTDOWN_TICKS } from '../src/shared/constants.js';
 import { PHASE } from '../src/shared/protocol.js';
 

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRoom, addPlayer, removePlayer, spawnsFor, startRound, advance, playerList, setReady, allReady, addBot, removeBot, toLobby, cycleMap, stateOf } from '../src/server/room.js';
-import { scheduleTurn, helloPayload } from '../src/server/authority.js';
+import { createRoom, addPlayer, removePlayer, spawnsFor, startRound, advance, playerList, setReady, allReady, addBot, removeBot, toLobby, cycleMap, stateOf } from '../src/client/host/room.js';
+import { scheduleTurn, helloPayload } from '../src/client/host/authority.js';
 import { MAX_PLAYERS, HUES, COUNTDOWN_TICKS, RESULTS_TICKS, TURN_WINDOW, BODY, ACTIVATE } from '../src/shared/constants.js';
 import { bodyInBounds } from '../src/shared/arena.js';
 import { PHASE } from '../src/shared/protocol.js';
@@ -170,7 +170,7 @@ test('hello carries everything a joiner needs to rebuild the arena', () => {
 test('each tick is broadcast to every connected player', () => {
     const r = createRoom();
     const sent = [];
-    const fakeSocket = () => ({ emit: (ev, payload) => sent.push([ev, payload]), on: () => {} });
+    const fakeSocket = () => ({ deliver: (ev, payload) => sent.push([ev, payload]) });
     addPlayer(r, fakeSocket(), false);
     addPlayer(r, fakeSocket(), false);
     startRound(r);
@@ -327,7 +327,7 @@ test('the state message carries the map so the lobby can name it', () => {
 test('a round is built on the room map and announces it', () => {
     const r = createRoom();
     const sent = [];
-    const fakeSocket = () => ({ emit: (ev, payload) => sent.push([ev, payload]), on: () => {} });
+    const fakeSocket = () => ({ deliver: (ev, payload) => sent.push([ev, payload]) });
     addPlayer(r, fakeSocket(), false);
     addPlayer(r, fakeSocket(), false);
     cycleMap(r, 1);

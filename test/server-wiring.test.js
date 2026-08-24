@@ -1,13 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRegistry, createLobby } from '../src/server/lobby.js';
-import { addPlayer, stateOf } from '../src/server/room.js';
-import { helloPayload } from '../src/server/authority.js';
+import { createRoom, addPlayer, stateOf } from '../src/client/host/room.js';
+import { helloPayload } from '../src/client/host/authority.js';
 import { PHASE } from '../src/shared/protocol.js';
 
 test('hello tells a joiner which room they are in and who hosts it', () => {
-    const rooms = createRegistry();
-    const r = createLobby(rooms, false);
+    const r = createRoom('PONY', false);
     const p = addPlayer(r, null, false, 'Tiago');
     const msg = helloPayload(r, p);
     assert.equal(msg[0], p.id);
@@ -16,8 +14,7 @@ test('hello tells a joiner which room they are in and who hosts it', () => {
 });
 
 test('joining a room that is mid-game leaves you out of the current round', () => {
-    const rooms = createRegistry();
-    const r = createLobby(rooms, true);
+    const r = createRoom('PONY', true);
     const first = addPlayer(r, null, false, 'A');
     r.roster = [[first.id, first.hue, 0, 'A', 1, 0]];
     r.phase = PHASE.RACE;
@@ -29,8 +26,7 @@ test('joining a room that is mid-game leaves you out of the current round', () =
 });
 
 test('a state message carries the phase, code, host and everyone in the room', () => {
-    const rooms = createRegistry();
-    const r = createLobby(rooms, true);
+    const r = createRoom('PONY', true);
     const a = addPlayer(r, null, false, 'A');
     addPlayer(r, null, true, '');
     const [phase, code, hostId, players] = stateOf(r);

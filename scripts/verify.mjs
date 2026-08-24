@@ -52,6 +52,10 @@ page.on('response', (r) => {
     }
 });
 
+const offRoute = (route) =>
+    (route.request().url().startsWith(url) ? route.continue() : route.abort());
+await page.route('**/*', offRoute);
+
 await page.goto(url, { waitUntil: 'load' });
 
 try {
@@ -83,6 +87,59 @@ const state = await page.evaluate(() => ({
 }));
 const domWithJs = await page.content();
 
+const painted = (p) => p.evaluate(() => [...document.querySelectorAll('canvas')].some((c) => {
+    const ctx = c.getContext('2d');
+    if (!ctx) return false;
+    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    for (let i = 3; i < d.length; i += 997) {
+        if (d[i]) return true;
+    }
+    return false;
+}));
+
+const seat = async (label) => {
+    const p = await browser.newPage();
+    p.on('pageerror', (e) => pageErrors.push(`${label}: ${e.message}`));
+    p.on('console', (m) => m.type() === 'error' && consoleErrors.push(`${label}: ${m.text()}`));
+    await p.route('**/*', offRoute);
+    await p.goto(url, { waitUntil: 'load' });
+    return p;
+};
+
+let peersPlayed = false;
+try {
+    const one = await seat('host');
+    await one.fill('#nm', 'Host');
+    await one.click('#make');
+    await one.waitForSelector('#lobby:not([hidden])', { timeout: 8000 });
+    const code = (await one.textContent('#lcode')).trim().split(/\s+/).pop();
+
+    const two = await seat('guest');
+    await two.fill('#nm', 'Guest');
+    await two.fill('#code', code);
+    await two.click('#join');
+    await two.waitForSelector('#lobby:not([hidden])', { timeout: 8000 });
+    await one.waitForTimeout(1500);
+
+    const names = await one.evaluate(() => [...document.querySelectorAll('#ppl li')].length);
+    if (names < 2) {
+        failures.push(`the host sees ${names} player(s) after someone joined over the relay`);
+    }
+
+    await one.click('#ready');
+    await two.click('#ready');
+    await one.waitForTimeout(6000);
+
+    if (!(await painted(one)) || !(await painted(two))) {
+        failures.push('two peers reached a round but at least one arena never painted');
+    }
+    peersPlayed = true;
+    await one.close();
+    await two.close();
+} catch (e) {
+    failures.push(`two peers could not play together over the relay: ${e.message}`);
+}
+
 const inertContext = await browser.newContext({ javaScriptEnabled: false });
 const inertPage = await inertContext.newPage();
 await inertPage.goto(url, { waitUntil: 'load' });
@@ -107,7 +164,7 @@ await browser.close();
 await harness.close();
 
 console.log(`  ${state.scripts} script element(s), ${state.inlineBytes} inline bytes, `
-    + `dom-changed=${touchedDom}, canvas-painted=${state.canvasPainted}`);
+    + `dom-changed=${touchedDom}, canvas-painted=${state.canvasPainted}, two-peer=${peersPlayed}`);
 if (failures.length) {
     console.log(`\x1b[91m\x1b[1m[DEAD] ${zipPath}\x1b[39m`);
     for (const f of failures) {

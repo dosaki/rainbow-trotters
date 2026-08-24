@@ -9,6 +9,9 @@ import { botInputs } from './bots/bot.js';
 export const createRoom = (code = '', open = false) => ({
     code,
     open,
+    relay: null,
+    watch: null,
+    demo: false,
     solo: false,
     hostId: -1,
     rounds: 0,
@@ -26,13 +29,13 @@ export const createRoom = (code = '', open = false) => ({
     botRng: rngFrom(1),
 });
 
-export const addPlayer = (room, socket, isBot, name = '') => {
+export const addPlayer = (room, link, isBot, name = '') => {
     if (!room.slots.length) return null;
     const slot = room.slots.shift();
     const player = {
         id: slot,
         hue: HUES[slot],
-        socket,
+        link,
         bot: !!isBot,
         name: cleanName(isBot ? `Bot ${slot + 1}` : name, slot),
         ready: !!isBot,
@@ -74,13 +77,13 @@ export const removePlayer = (room, id) => {
     }
 };
 
-export const addHuman = (room, socket) => {
+export const addHuman = (room, link) => {
     if (room.players.size >= MAX_PLAYERS) {
         const bot = [...room.players.values()].find((p) => p.bot);
         if (!bot) return null;
         removePlayer(room, bot.id);
     }
-    return addPlayer(room, socket, false);
+    return addPlayer(room, link, false);
 };
 
 export const playerList = (room) =>
@@ -114,7 +117,7 @@ export const allReady = (room) => {
         humans++;
         if (!p.ready) return false;
     }
-    return humans > 0;
+    return humans > 0 || (room.demo && room.players.size > 1);
 };
 
 export const addBot = (room) => addPlayer(room, null, true, '');

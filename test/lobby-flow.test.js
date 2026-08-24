@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     createRoom, addPlayer, addBot, advance, setReady, allReady, cycleMap,
-} from '../src/server/room.js';
+} from '../src/client/host/room.js';
 import { PHASE } from '../src/shared/protocol.js';
 import { COUNTDOWN_TICKS, RESULTS_TICKS, WINS_TO_TAKE } from '../src/shared/constants.js';
 
@@ -110,7 +110,7 @@ test('joining a room that is already playing does not disturb it', () => {
 
 test('returning to the lobby is announced, not just performed', () => {
     const sent = [];
-    const socket = { emit: (ev, payload) => sent.push([ev, payload]), on: () => {} };
+    const socket = { deliver: (ev, payload) => sent.push([ev, payload]) };
     const r = createRoom('PONY', false);
     const me = addPlayer(r, socket, false, 'Tiago');
     for (let i = 0; i < 3; i++) {

@@ -1,5 +1,9 @@
-import { EV, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, parseMap } from '#shared';
-import { connect, startPinging } from './net/socket.js';
+import { EV, MODE, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, parseMap } from '#shared';
+import { startPinging } from './net/relay.js';
+import { createLocalHost } from './host/local.js';
+import { createSession } from './host/session.js';
+import { createDemo } from './host/demo.js';
+import { makeCode, cleanCode } from './host/code.js';
 import { createNet } from './net/state.js';
 import { createClock } from './net/clock.js';
 import { createPredictor } from './net/prediction.js';
@@ -28,7 +32,7 @@ const bursts = [];
 const hue = (id) => net.hueOf(id);
 const repaint = () => repaintFromGrid(layers, net.state.grid, hue);
 
-const sock = connect({
+const handlers = {
     [EV.HELLO]: (p) => {
         net.onHello(p);
         predictor = createPredictor(net.myId);
@@ -42,7 +46,12 @@ const sock = connect({
     [EV.PONG]: (p) => clock.onPong(p[0], Date.now()),
     [EV.STATE]: (p) => { net.onState(p); shell(); },
     [EV.ERR]: (p) => menuError(p[0]),
-});
+};
+
+let sock = null;
+const send = (ev, payload) => {
+    if (sock) sock.send(ev, payload);
+};
 
 
 const shell = () => {
@@ -53,11 +62,11 @@ const shell = () => {
         quit.className = '';
         quit.textContent = 'Back to Menu';
         showLobby(
-            () => sock.send(EV.READY, []),
-            (delta) => sock.send(EV.BOT, [delta]),
-            (delta) => sock.send(EV.MAP, [delta]),
+            () => send(EV.READY, []),
+            (delta) => send(EV.BOT, [delta]),
+            (delta) => send(EV.MAP, [delta]),
             (text) => (parseMap(text)
-                ? sock.send(EV.MAPSET, [text])
+                ? send(EV.MAPSET, [text])
                 : showToast('Bad map')),
         );
         renderLobby(net);
@@ -72,12 +81,53 @@ const shell = () => {
     }
 };
 
-const choose = (mode, name, code) => sock.send(EV.MENU, [mode, name, code]);
+let demo = null;
+
+const stopDemo = () => {
+    if (!demo) return;
+    demo.stop();
+    demo = null;
+    net.state = null;
+    net.phase = PHASE.RESULTS;
+    for (let i = 0; i < layers.length; i++) {
+        clearLayer(layers, i);
+    }
+};
+
+const startDemo = () => {
+    if (demo) return;
+    demo = createDemo({
+        [EV.ROUND]: (p) => { net.onRound(p); repaint(); },
+        [EV.TICK]: (p) => net.pushTick(p[0], p[1]),
+    });
+};
+
+const AUTO_ROOM = 'PLAY';
+const RELAY = location.hostname === 'localhost' ? `ws://${location.host}` : undefined;
+
+const choose = (mode, name, code) => {
+    stopDemo();
+    if (sock) sock.close();
+    if (mode === MODE.SOLO) {
+        sock = createLocalHost(handlers);
+    }
+    else {
+        const typed = cleanCode(code);
+        if (mode === MODE.JOIN && !typed) {
+            menuError(0);
+            return;
+        }
+        const room = mode === MODE.JOIN ? typed : mode === MODE.AUTO ? AUTO_ROOM : makeCode();
+        sock = createSession(room, handlers, { joinOnly: mode === MODE.JOIN, open: mode === MODE.AUTO, base: RELAY });
+    }
+    send(EV.MENU, [mode, name, code]);
+};
 showMenu(choose);
+startDemo();
 
 const leave = () => {
     if (net.myId < 0) return;
-    sock.send(EV.QUIT, []);
+    send(EV.QUIT, []);
     net.myId = -1;
     net.state = null;
     net.phase = PHASE.RESULTS;
@@ -90,6 +140,7 @@ const leave = () => {
     h.textContent = '';
     o.textContent = '';
     showMenu(choose);
+    startDemo();
 };
 
 let off = load('rt.mute') === '1';
@@ -118,7 +169,7 @@ addEventListener('keydown', (e) => {
     }
 });
 
-startPinging(sock);
+startPinging({ send });
 
 const lead = () => Math.min(10, net.buffer.length + clock.lagTicks);
 
@@ -130,7 +181,7 @@ bindInput((input) => {
     if (!me || !me.alive) return;
     const at = net.state.tick + lead();
     predictor.turn(input, at);
-    sock.send(EV.TURN, [input, at]);
+    send(EV.TURN, [input, at]);
 });
 
 let lastAt = Date.now();
@@ -154,7 +205,9 @@ const applyTick = () => {
         const u = s.unicorns.find((x) => x.id === id);
         bursts.push({ x: u.x, y: u.y, hue: hue(id), born: s.tick });
         beginFade(layers, id, u.deathTick + DECAY_TICKS - FADE_TICKS);
-        sfx('crash');
+        if (net.myId >= 0) {
+            sfx('crash');
+        }
     }
 
     for (const id of ev.clearedIds) {
@@ -206,12 +259,15 @@ const frame = () => {
     }
     if (net.phase === PHASE.LOBBY) return;
     if (!net.state) {
-        drawOverlay(o, net);
+        if (net.myId < 0) {
+            o.textContent = '';
+        }
+        else drawOverlay(o, net);
         return;
     }
     const s = net.state;
 
-    ctx.fillStyle = '#0c0c18';
+    ctx.fillStyle = '#0d0620';
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     composite(ctx, layers, s.tick);
 
@@ -252,6 +308,8 @@ const frame = () => {
         }
         drawBurst(ctx, bursts[i].x, bursts[i].y, bursts[i].hue, age);
     }
+
+    if (net.myId < 0) return;
 
     syncNames(s.unicorns
         .filter((u) => u.alive)

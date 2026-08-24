@@ -3,6 +3,36 @@ import { mapAt } from '#shared';
 
 export const hideLobby = () => { lobby.hidden = true; };
 
+let shown = '';
+let flashing = 0;
+
+const flash = (text) => {
+    cpy.textContent = text;
+    clearTimeout(flashing);
+    flashing = setTimeout(() => { cpy.textContent = 'Copy'; }, 1400);
+};
+
+const select = () => {
+    try {
+        const range = document.createRange();
+        range.selectNodeContents(lcode);
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        flash('Ctrl+C');
+    } catch {
+    }
+};
+
+const copyCode = () => {
+    if (!shown) return;
+    try {
+        navigator.clipboard.writeText(shown).then(() => flash('Copied'), select);
+    } catch {
+        select();
+    }
+};
+
 export const showLobby = (onReady, onBot, onMap, onImport) => {
     lobby.hidden = false;
     ready.onclick = onReady;
@@ -10,10 +40,14 @@ export const showLobby = (onReady, onBot, onMap, onImport) => {
     botless.onclick = () => onBot(-1);
     map.onclick = () => onMap(1);
     mapadd.onclick = () => onImport(mapin.value);
+    cpy.onclick = copyCode;
 };
 
 export const renderLobby = (net) => {
-    lcode.textContent = net.code ? `Lobby ${net.code}` : 'Single player';
+    shown = net.code;
+    lcode.textContent = shown || 'Single player';
+    lc.className = shown ? '' : 'solo';
+    cpy.hidden = !shown;
 
     const list = ppl;
     list.textContent = '';

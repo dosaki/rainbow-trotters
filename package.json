@@ -19,13 +19,11 @@
   },
   "devDependencies": {
     "eslint": "^10.8.1",
-    "express": "^4.21.0",
     "playwright": "^1.62.1",
     "roadroller": "^2.1.0",
-    "socket.io": "^4.8.0",
-    "socket.io-client": "^4.8.3",
     "terser": "^5.36.0",
     "webpack": "^5.94.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "ws": "^8.21.3"
   }
 }

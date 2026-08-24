@@ -7,6 +7,7 @@ export const EV = {
     MAP: 'a',       // C->S [delta]         host only, cycles the map
     MAPSET: 'i',    // C->S [text]         host only, imports a map
     QUIT: 'x',      // C->S []              leave the room, back to the menu
+    CLAIM: 'c',
     HELLO: 'h',     // S->C [yourId, tick, seed, phase, startTick, players, turnLog, code, hostId, map, custom]
     TICK: 'k',      // S->C [tick, turns]
     ROUND: 'r',     // S->C [seed, startTick, players, map]
