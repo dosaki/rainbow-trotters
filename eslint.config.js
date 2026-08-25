@@ -10,6 +10,7 @@ const BROWSER = {
     innerWidth: 'readonly', innerHeight: 'readonly',
     localStorage: 'readonly', AudioContext: 'readonly',
     WebSocket: 'readonly', navigator: 'readonly', getSelection: 'readonly', matchMedia: 'readonly',
+    TextEncoder: 'readonly', TextDecoder: 'readonly',
     io: 'readonly',
     c: 'readonly', h: 'readonly', o: 'readonly', n: 'readonly', t: 'readonly',
     menu: 'readonly', lobby: 'readonly', err: 'readonly', nm: 'readonly',

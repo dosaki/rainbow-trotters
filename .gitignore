@@ -6,3 +6,4 @@ dist/
 .idea/
 banner.svg
 banner.xcf
+build-wavedash/

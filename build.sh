@@ -6,11 +6,13 @@ NAME="rainbow-trotters"
 
 MODE=""
 ROADROLL=1
+export WAVEDASH=0
 
 for arg in "$@"; do
   case "${arg}" in
     --dev|--ci|--dist)  MODE="${arg}" ;;
     --no-roadroller|--no-rr) ROADROLL=0 ;;
+    --wavedash) WAVEDASH=1; ROADROLL=0 ;;
     *) echo "build.sh: unknown option '${arg}'" >&2; exit 2 ;;
   esac
 done
@@ -30,6 +32,13 @@ if [[ "${MODE}" == "" || "${MODE}" == "--dist" ]] && [[ "${ROADROLL}" == 1 ]]; t
 fi
 
 cp ./static/index.html ./public/index.html
+
+if [[ "${WAVEDASH}" == 1 ]]; then
+  rm -rf ./build-wavedash && mkdir -p ./build-wavedash
+  cp ./public/index.html ./public/client.js ./build-wavedash/
+  echo "[wavedash] build-wavedash/ is ready to upload, no size budget applies"
+  exit 0
+fi
 
 if [[ "${MODE}" == "" || "${MODE}" == "--dist" ]]; then
   rm -rf ./dist && mkdir -p ./dist
