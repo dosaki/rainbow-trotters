@@ -1,7 +1,7 @@
 import { EV, MODE, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, W, H, parseMap } from '#shared';
 import { startPinging } from './net/relay.js';
 import { createLocalHost } from './host/local.js';
-import { createSession } from './host/session.js';
+import { createSession, CODES, launchLobby } from './host/session.js';
 import { createDemo } from './host/demo.js';
 import { makeCode, cleanCode } from './host/code.js';
 import { createNet } from './net/state.js';
@@ -19,6 +19,7 @@ import { showMenu, hideMenu, menuError, load, save } from './ui/menu.js';
 import { showLobby, hideLobby, renderLobby } from './ui/lobby.js';
 import { syncNames, clearNames } from './ui/names.js';
 import { showToast, clearToast } from './ui/toast.js';
+import { platformReady } from './platform.js';
 
 const { ctx } = setupCanvas(c);
 
@@ -68,6 +69,7 @@ const shell = () => {
             (text) => (parseMap(text)
                 ? send(EV.MAPSET, [text])
                 : showToast('Bad map')),
+            CODES || !sock ? null : () => sock.copyInvite(),
         );
         renderLobby(net);
         clearNames();
@@ -113,6 +115,9 @@ const choose = (mode, name, code) => {
     if (mode === MODE.SOLO) {
         sock = createLocalHost(handlers);
     }
+    else if (!CODES) {
+        sock = createSession(launchLobby(), handlers, {});
+    }
     else {
         const typed = cleanCode(code);
         if (mode === MODE.JOIN && !typed) {
@@ -124,8 +129,15 @@ const choose = (mode, name, code) => {
     }
     send(EV.MENU, [mode, name, code]);
 };
+if (!CODES) {
+    nm.hidden = true;
+    code.parentElement.hidden = true;
+}
 showMenu(choose);
 startDemo();
+if (!CODES && launchLobby()) {
+    choose(MODE.JOIN, '', '');
+}
 
 const leave = () => {
     if (net.myId < 0) return;
@@ -324,3 +336,4 @@ const frame = () => {
     drawOverlay(o, net);
 };
 requestAnimationFrame(frame);
+platformReady();

@@ -2,6 +2,10 @@ import { EV, ERR } from '#shared';
 import { connect } from '../net/relay.js';
 import { createHost } from './index.js';
 
+export const CODES = true;
+
+export const launchLobby = () => '';
+
 const CLAIM_MS = 700;
 const RETRIES = 1;
 

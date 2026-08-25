@@ -1,4 +1,5 @@
 import { mapAt } from '#shared';
+import { CODES } from '../host/session.js';
 
 
 export const hideLobby = () => { lobby.hidden = true; };
@@ -33,21 +34,24 @@ const copyCode = () => {
     }
 };
 
-export const showLobby = (onReady, onBot, onMap, onImport) => {
+export const showLobby = (onReady, onBot, onMap, onImport, onShare) => {
     lobby.hidden = false;
     ready.onclick = onReady;
     botmore.onclick = () => onBot(1);
     botless.onclick = () => onBot(-1);
     map.onclick = () => onMap(1);
     mapadd.onclick = () => onImport(mapin.value);
-    cpy.onclick = copyCode;
+    cpy.onclick = onShare
+        ? () => onShare().then(() => flash('Copied'), () => flash('Try again'))
+        : copyCode;
 };
 
 export const renderLobby = (net) => {
     shown = net.code;
-    lcode.textContent = shown || 'Single player';
-    lc.className = shown ? '' : 'solo';
+    lcode.textContent = CODES || !shown ? shown || 'Single player' : 'Ready to invite';
+    lc.className = shown && CODES ? '' : 'solo';
     cpy.hidden = !shown;
+    cpy.textContent = CODES ? 'Copy' : 'Invite';
 
     const list = ppl;
     list.textContent = '';
