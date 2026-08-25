@@ -1,4 +1,4 @@
-<div align="center"><img width=150 src="./banner.png" /></div>
+<div align="center"><img src="./banner.png" /></div>
 <h1 align="center">Rainbow Trotters</h1>
 
 Compete against Bots or against other players in this top-down lightcycle-inspired game, except you're a unicorn!

@@ -49,13 +49,18 @@ jobs:
       - name: Verify the game actually boots
         run: node scripts/verify.mjs dist/rainbow-trotters.zip
 
+      - name: Pack the wavedash build
+        run: ./build.sh --ci --wavedash
+
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          zip=dist/rainbow-trotters.zip
-          size=$(( $(wc -c < "$zip") ))
+          js=dist/rainbow-trotters.zip
+          wd=dist/rainbow-trotters-wavedash.zip
+          jsize=$(( $(wc -c < "$js") ))
+          wsize=$(( $(wc -c < "$wd") ))
 
           last=$(git tag -l 'v[0-9]*' | sed 's/^v//' | grep -E '^[0-9]+$' | sort -n | tail -1 || true)
           tag="v$(( ${last:-0} + 1 ))"
@@ -63,6 +68,9 @@ jobs:
           git tag "$tag"
           git push origin "$tag"
 
-          gh release create "$tag" "$zip" \
-            --title "$tag" \
-            --notes "${size} bytes of 13312, $(( 13312 - size )) to spare."
+          {
+            printf -- '- js13k: %s bytes (%s spare)\n' "$jsize" "$(( 13312 - jsize ))"
+            printf -- '- wavedash: %s bytes (%s spare)\n' "$wsize" "$(( 13312 - wsize ))"
+          } > notes.md
+
+          gh release create "$tag" "$js" "$wd" --title "$tag" --notes-file notes.md

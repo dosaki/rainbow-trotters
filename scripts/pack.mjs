@@ -5,7 +5,9 @@ import { deflateRawSync, crc32 } from 'zlib';
 import { execFileSync } from 'child_process';
 
 const LIMIT = 13312;
-const [appDir = 'app', outZip = 'dist/game.zip'] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const soft = args.includes('--no-limit');
+const [appDir = 'app', outZip = 'dist/game.zip'] = args.filter((a) => a !== '--no-limit');
 
 const walk = (dir) => readdirSync(dir).flatMap((n) => {
     const p = join(dir, n);
@@ -95,5 +97,7 @@ try {
 const size = statSync(outZip).size;
 const left = LIMIT - size;
 const detail = `${size} bytes, ${Math.abs(left)} ${left < 0 ? 'OVER' : 'left'}, ${entries.length} entr${entries.length > 1 ? 'ies' : 'y'}`;
-console.log(left < 0 ? `\x1b[93m\x1b[1m[TOO BIG] ${detail}\x1b[39m` : `\x1b[92m\x1b[1m[OK] ${detail}\x1b[39m`);
-process.exit(left < 0 ? 1 : 0);
+console.log(left < 0 && !soft
+    ? `\x1b[93m\x1b[1m[TOO BIG] ${detail}\x1b[39m`
+    : `\x1b[92m\x1b[1m[OK] ${detail}\x1b[39m`);
+process.exit(left < 0 && !soft ? 1 : 0);

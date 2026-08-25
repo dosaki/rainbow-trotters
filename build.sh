@@ -12,7 +12,7 @@ for arg in "$@"; do
   case "${arg}" in
     --dev|--ci|--dist)  MODE="${arg}" ;;
     --no-roadroller|--no-rr) ROADROLL=0 ;;
-    --wavedash) WAVEDASH=1; ROADROLL=0 ;;
+    --wavedash) WAVEDASH=1 ;;
     *) echo "build.sh: unknown option '${arg}'" >&2; exit 2 ;;
   esac
 done
@@ -26,7 +26,7 @@ if [[ "${MODE}" != "--dev" ]]; then
   mv ./public/client.tmp.js ./public/client.js
 fi
 
-if [[ "${MODE}" == "" || "${MODE}" == "--dist" ]] && [[ "${ROADROLL}" == 1 ]]; then
+if [[ "${MODE}" == "" || "${MODE}" == "--dist" || "${WAVEDASH}" == 1 ]] && [[ "${ROADROLL}" == 1 ]]; then
   ./node_modules/.bin/roadroller ./public/client.js -o ./public/client.rr.js
   mv ./public/client.rr.js ./public/client.js
 fi
@@ -36,6 +36,8 @@ cp ./static/index.html ./public/index.html
 if [[ "${WAVEDASH}" == 1 ]]; then
   rm -rf ./build-wavedash && mkdir -p ./build-wavedash
   cp ./public/index.html ./public/client.js ./build-wavedash/
+  mkdir -p ./dist
+  node scripts/pack.mjs build-wavedash "dist/${NAME}-wavedash.zip" --no-limit
   echo "[wavedash] build-wavedash/ is ready to upload, no size budget applies"
   exit 0
 fi
