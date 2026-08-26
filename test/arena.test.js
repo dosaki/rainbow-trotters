@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     createArena, idx, inBounds, cellAt, paint, clearCell, clearOwner, hashGrid,
-    paintBody, bodyInBounds, frontier,
+    paintSquare, trail, bodyInBounds, frontier,
 } from '../src/shared/arena.js';
 import { W, H, BODY, HALF, LHALF } from '../src/shared/constants.js';
 
@@ -44,21 +44,33 @@ test('clearOwner removes only that player and reports what it cleared', () => {
     assert.equal(cellAt(g, 2, 0), 6);
 });
 
-test('paintBody fills the oriented footprint, long along travel', () => {
+test('paintSquare fills a BODY square, the same shape the client draws', () => {
     const g = createArena();
-    paintBody(g, 50, 60, 2, 0);
+    paintSquare(g, 50, 60, 2);
     for (let y = 60 - HALF; y <= 60 + HALF; y++) {
-        for (let x = 50 - LHALF; x <= 50 + LHALF; x++) {
+        for (let x = 50 - HALF; x <= 50 + HALF; x++) {
             assert.equal(cellAt(g, x, y), 3, `(${x},${y})`);
         }
     }
-    assert.equal(cellAt(g, 50 + LHALF + 1, 60), 0, 'nothing beyond the nose');
-    assert.equal(cellAt(g, 50, 60 + HALF + 1), 0, 'nothing beyond the flank');
+    assert.equal(cellAt(g, 50 + HALF + 1, 60), 0, 'nothing beyond the flank');
+    assert.equal(cellAt(g, 50, 60 + HALF + 1), 0, 'nothing beyond the other flank');
+});
 
-    const v = createArena();
-    paintBody(v, 50, 60, 2, 1);
-    assert.equal(cellAt(v, 50, 60 + LHALF), 3, 'facing down, the long axis is vertical');
-    assert.equal(cellAt(v, 50 + LHALF, 60), 0, 'and the flank is only BODY wide');
+test('the trail is laid HALF ahead, well inside the frontier that guards it', () => {
+    for (const dir of [0, 1, 2, 3]) {
+        const laid = trail(50, 60, dir);
+        const guard = frontier(50, 60, dir);
+        assert.equal(laid.length, BODY, 'a trail row is as wide as the body');
+        for (const [tx, ty] of laid) {
+            const reach = Math.max(Math.abs(tx - 50), Math.abs(ty - 60));
+            assert.ok(reach <= HALF,
+                `dir ${dir} lays a cell ${reach} out; anything past HALF is a cell the client never draws`);
+        }
+        for (const [gx, gy] of guard) {
+            assert.ok(!laid.some(([tx, ty]) => tx === gx && ty === gy),
+                'the guarded cells are checked before they are ever painted');
+        }
+    }
 });
 
 test('bodyInBounds requires the whole body to fit, not just the centre', () => {

@@ -50,12 +50,14 @@ test('the trail is a continuous band with no gaps behind the body', () => {
     run(s, 8);
     const u = unicornById(s, 0);
     assert.equal(u.x, 10 + 8 / STEP_TICKS);
-    for (let x = 10 - LHALF; x <= u.x + LHALF; x++) {
+    for (let x = 10 - HALF; x <= u.x + HALF; x++) {
         for (let y = 10 - HALF; y <= 10 + HALF; y++) {
             assert.equal(cellAt(s.grid, x, y), 1, `band cell (${x},${y})`);
         }
     }
-    assert.equal(cellAt(s.grid, u.x + LHALF + 1, 10), 0, 'and nothing painted beyond it');
+    assert.equal(cellAt(s.grid, u.x + HALF + 1, 10), 0,
+        'the trail stops HALF ahead of centre, which is exactly what the client draws;'
+        + ' painting as far as the nose leaves solid cells nobody can see');
 });
 
 test('turns apply at the start of the tick they arrive on', () => {
@@ -138,4 +140,44 @@ test('painting is independent of the order unicorns are listed in', () => {
 test('a body is BODY cells across and HALF is consistent with it', () => {
     assert.equal(BODY, HALF * 2 + 1);
     assert.ok(W >= BODY * 8 && H >= BODY * 8);
+});
+
+test('a trail is never wider than the body that laid it', () => {
+    const s = createState(1, [{ id: 1, x: 80, y: 20, dir: 1 }]);
+    const u = unicornById(s, 1);
+    const step = STEP_COST / STEP_GAIN;
+    for (let i = 0; i < step * 30; i++) tickSim(s, []);
+    const corner = u.y;
+    tickSim(s, [[1, 0]]);
+    for (let i = 0; i < step * 40; i++) tickSim(s, []);
+
+    let lowest = -1;
+    for (let y = 0; y < H; y++) {
+        if (cellAt(s.grid, 80, y)) lowest = y;
+    }
+    assert.equal(lowest, corner + HALF,
+        'the arm that stopped at the corner must end level with the arm that carried on, '
+        + 'or it leaves solid cells the client never draws');
+});
+
+test('a rider clears a corner at the tightest gap the body allows', () => {
+    const s = createState(1, [
+        { id: 1, x: 80, y: 20, dir: 1 },
+        { id: 2, x: 20, y: 53, dir: 0 },
+    ]);
+    const drawer = unicornById(s, 1);
+    const rider = unicornById(s, 2);
+    const step = STEP_COST / STEP_GAIN;
+
+    rider.alive = false;
+    for (let i = 0; i < step * 30; i++) tickSim(s, []);
+    tickSim(s, [[1, 0]]);
+    for (let i = 0; i < step * 40; i++) tickSim(s, []);
+    drawer.alive = false;
+    rider.alive = true;
+
+    assert.equal(rider.y - HALF, drawer.y + HALF + 1,
+        'the rider sits exactly one row clear of the horizontal arm');
+    for (let i = 0; i < step * 90 && rider.alive; i++) tickSim(s, []);
+    assert.ok(rider.alive, `rider died at x=${rider.x} passing under the corner at x=80`);
 });

@@ -5,7 +5,7 @@ import {
 } from '../src/client/render/trails.js';
 import { keyToInput, relativeTurn } from '../src/client/input/keyboard.js';
 import { isTypingTarget } from '../src/client/input/index.js';
-import { createArena, paintBody, paint, idx } from '../src/shared/arena.js';
+import { createArena, paintSquare, paint, idx } from '../src/shared/arena.js';
 import { drawPowerRing } from '../src/client/render/effects.js';
 import { drawUnicorn } from '../src/client/render/unicorns.js';
 import { GHOST, TICK_MS } from '../src/shared/constants.js';
@@ -89,14 +89,14 @@ test('repaintFromGrid redraws every painted cell on its owner layer', () => {
     const f = fakeFactory();
     const layers = createLayers(f.make);
     const grid = createArena();
-    paintBody(grid, 50, 50, 0, 0);
-    paintBody(grid, 90, 90, 3, 1);
+    paintSquare(grid, 50, 50, 0);
+    paintSquare(grid, 90, 90, 3);
     f.ops.length = 0;
     repaintFromGrid(layers, grid, () => 200);
     const clears = f.ops.filter(([op]) => op === 'clear').length;
     const fills = f.ops.filter(([op]) => op === 'fill').length;
     assert.equal(clears, MAX_PLAYERS + 1, 'every layer, map included, is wiped first');
-    assert.equal(fills, LONG * BODY * 2, 'and every painted cell is restored');
+    assert.equal(fills, BODY * BODY * 2, 'and every painted cell is restored');
 });
 
 test('arrow keys, WASD and space map to inputs', () => {

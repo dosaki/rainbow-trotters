@@ -92,6 +92,9 @@ test('ghost expiring inside a wall lets you escape into free space', () => {
     assert.equal(u.power, 0);
     step(s);
     assert.equal(u.alive, true);
+    assert.equal(cellAt(s.grid, 10 + AHEAD, 40), 6,
+        'the trail is laid inside the body, so a ghost expiring on an obstacle must not eat it');
+    step(s);
     assert.equal(cellAt(s.grid, 11 + AHEAD, 40), 1, 'painting resumes on escape');
 });
 
@@ -140,6 +143,7 @@ test('wall break paints its own trail down the middle of the corridor', () => {
     grantPower(u, BREAK);
     step(s);
     assert.equal(u.alive, true);
+    step(s);
     for (const y of band(40)) {
         assert.equal(cellAt(s.grid, 10 + AHEAD, y), 1, 'own trail stands in it');
     }

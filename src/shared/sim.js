@@ -1,5 +1,5 @@
 import { DIRS, ACTIVATE, BODY, DECAY_TICKS, ROUND_CAP_TICKS, WALL, BLAST } from './constants.js';
-import { createArena, cellAt, paint, paintBody, bodyInBounds, halfSpan, frontier, clearOwner, inBounds, clearCell, idx } from './arena.js';
+import { createArena, cellAt, paint, paintSquare, trail, bodyInBounds, halfSpan, frontier, clearOwner, inBounds, clearCell, idx } from './arena.js';
 import { rngFrom } from './rng.js';
 import { createUnicorn, applyTurn, stepsThisTick } from './unicorn.js';
 import { expirePower, isGhost, isBreaking, breakSwath, usePower } from './powers.js';
@@ -11,7 +11,7 @@ export const createState = (seed, spawns, map = null) => {
     paintMap(grid, map);
     const unicorns = spawns.map((s) => createUnicorn(s.id, s.x, s.y, s.dir));
     for (const u of unicorns) {
-        paintBody(grid, u.x, u.y, u.id, u.dir);
+        paintSquare(grid, u.x, u.y, u.id);
     }
     return {
         tick: 0,
@@ -109,8 +109,10 @@ const subStep = (s, movers) => {
             }
         }
         if (!isGhost(m.u)) {
-            for (const [cx, cy] of m.front) {
-                paint(s.grid, cx, cy, m.u.id);
+            for (const [cx, cy] of trail(m.u.x, m.u.y, m.u.dir)) {
+                if (!cellAt(s.grid, cx, cy)) {
+                    paint(s.grid, cx, cy, m.u.id);
+                }
             }
             m.u.cells += BODY;
         }

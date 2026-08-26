@@ -39,4 +39,9 @@ export default [
         languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: BROWSER },
         rules,
     },
+    {
+        files: ['src/client/audio/zzfx.js'],
+        languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: BROWSER },
+        rules: { ...rules, 'no-unused-vars': 'off' },
+    },
 ];

@@ -33,19 +33,18 @@ export const bodyInBounds = (x, y, dir) => {
     return x - ex >= 0 && x + ex < W && y - ey >= 0 && y + ey < H;
 };
 
-export const paintBody = (grid, x, y, id, dir) => {
-    const [ex, ey] = halfSpan(dir);
-    for (let oy = -ey; oy <= ey; oy++) {
-        for (let ox = -ex; ox <= ex; ox++) {
+export const paintSquare = (grid, x, y, id) => {
+    for (let oy = -HALF; oy <= HALF; oy++) {
+        for (let ox = -HALF; ox <= HALF; ox++) {
             grid[(y + oy) * W + (x + ox)] = id + 1;
         }
     }
 };
 
-const perp = (x, y, dir, half) => {
+const perp = (x, y, dir, half, ahead) => {
     const [dx, dy] = DIRS[dir];
-    const cx = x + dx * (LHALF + 1);
-    const cy = y + dy * (LHALF + 1);
+    const cx = x + dx * ahead;
+    const cy = y + dy * ahead;
     const px = dy, py = dx;
     const cells = [];
     for (let k = -half; k <= half; k++) {
@@ -54,7 +53,9 @@ const perp = (x, y, dir, half) => {
     return cells;
 };
 
-export const frontier = (x, y, dir) => perp(x, y, dir, HALF);
+export const frontier = (x, y, dir) => perp(x, y, dir, HALF, LHALF + 1);
+
+export const trail = (x, y, dir) => perp(x, y, dir, HALF, HALF);
 
 export const canStep = (grid, x, y, dir) => {
     const [dx, dy] = DIRS[dir];
@@ -62,7 +63,7 @@ export const canStep = (grid, x, y, dir) => {
         && !frontier(x, y, dir).some(([cx, cy]) => cellAt(grid, cx, cy) !== 0);
 };
 
-export const swath = (x, y, dir) => perp(x, y, dir, HALF + BODY * 2);
+export const swath = (x, y, dir) => perp(x, y, dir, HALF + BODY * 2, LHALF + 1);
 
 export const spawnSlot = (i, n) => {
     const M = 8;
