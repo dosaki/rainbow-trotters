@@ -203,6 +203,9 @@ export const spawnsFor = (room) =>
 
 export const startRound = (room) => {
     room.seed = (Math.random() * 0x7fffffff) | 0;
+    for (const p of room.players.values()) {
+        p.kind = (p.id + room.rounds) % 3;
+    }
     room.turnLog.length = 0;
     room.state = createState(room.seed, spawnsFor(room), mapAt(room.map, room.custom));
     room.roster = playerList(room);
@@ -234,7 +237,7 @@ export const advance = (room) => {
             if (!p.bot) continue;
             const u = room.state.unicorns.find((x) => x.id === p.id);
             if (!u || !u.alive) continue;
-            for (const input of botInputs(room.state, u, room.botRng)) {
+            for (const input of botInputs(room.state, u, room.botRng, p.kind)) {
                 p.pending.push([room.state.tick, input]);
             }
         }

@@ -47,9 +47,10 @@ const blast = (s, x, y) => {
     }
 };
 
-const kill = (s, u) => {
+const kill = (s, u, by = -1) => {
     if (!u.alive) return;
     u.alive = false;
+    u.killedBy = by;
     u.deathTick = s.tick;
     s.dead.push({ id: u.id, clearTick: s.tick + DECAY_TICKS });
     s.events.deaths.push(u.id);
@@ -71,11 +72,12 @@ const subStep = (s, movers) => {
         }
         if (isGhost(m.u)) continue;
         const wallOnly = isBreaking(m.u);
-        const hit = m.front.some(([cx, cy]) => {
+        const hit = m.front.find(([cx, cy]) => {
             const v = cellAt(s.grid, cx, cy);
             return wallOnly ? v === WALL + 1 : v !== 0;
         });
         if (hit) {
+            m.by = cellAt(s.grid, hit[0], hit[1]) - 1;
             doomed.add(m.u.id);
         }
     }
@@ -97,7 +99,7 @@ const subStep = (s, movers) => {
 
     for (const m of moves) {
         if (doomed.has(m.u.id)) {
-            kill(s, m.u);
+            kill(s, m.u, m.by);
             continue;
         }
         const ox = m.u.x, oy = m.u.y;

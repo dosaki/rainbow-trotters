@@ -19,6 +19,7 @@ export default {
         ? [
             swap(/(^|\/)platform\.js$/, 'src/client/platform-wavedash.js'),
             swap(/host\/session\.js$/, 'src/client/host/wd-session.js'),
+        swap(/(^|\/)achievements\.js$/, 'src/client/achievements-wavedash.js'),
         ]
         : [],
 };

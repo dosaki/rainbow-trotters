@@ -175,7 +175,8 @@ test('a turn and an activation aimed at the same tick both survive', () => {
     p.pending.push([r.state.tick, 1], [r.state.tick, ACTIVATE]);
     const before = r.turnLog.length;
     advance(r);
-    assert.equal(r.turnLog.length - before, 2, 'a single pending slot would have dropped one');
+    const mine = r.turnLog.slice(before).filter(([, id]) => id === p.id);
+    assert.equal(mine.length, 2, 'a single pending slot would have dropped one');
 });
 
 test('a round ends the moment every human is out, rather than letting bots race on', () => {

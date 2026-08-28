@@ -1,4 +1,4 @@
-import { EV, MODE, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, W, H, parseMap } from '#shared';
+import { EV, MODE, TICK_MS, PHASE, GHOST, SPEED, DECAY_TICKS, FADE_TICKS, HALF, W, H, parseMap, aliveCount } from '#shared';
 import { startPinging } from './net/relay.js';
 import { createLocalHost } from './host/local.js';
 import { createSession, CODES, launchLobby } from './host/session.js';
@@ -15,6 +15,7 @@ import { bindInput, setDirSource, setInputActive } from './input/index.js';
 import { drawHud } from './ui/hud.js';
 import { drawOverlay } from './ui/overlay.js';
 import { sfx, music, muted } from './audio/sfx.js';
+import { award } from './achievements.js';
 import { showMenu, hideMenu, menuError, load, save } from './ui/menu.js';
 import { showLobby, hideLobby, renderLobby } from './ui/lobby.js';
 import { syncNames, clearNames } from './ui/names.js';
@@ -221,6 +222,19 @@ const applyTick = () => {
         beginFade(layers, id, u.deathTick + DECAY_TICKS - FADE_TICKS);
         if (net.myId >= 0) {
             sfx('crash');
+            if (u.killedBy === net.myId) {
+                award(id === net.myId ? 's' : 't');
+            }
+        }
+    }
+
+    const mine = net.myId >= 0 && net.me();
+    if (mine) {
+        if (net.winsOf(net.myId)) {
+            award('w');
+        }
+        if (mine.alive && aliveCount(s) === 1 && net.players.size >= 4) {
+            award('o');
         }
     }
 

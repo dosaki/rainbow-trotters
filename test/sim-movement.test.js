@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createState, tickSim, aliveCount, unicornById } from '../src/shared/sim.js';
-import { cellAt } from '../src/shared/arena.js';
+import { cellAt, paint } from '../src/shared/arena.js';
 import { W, H, BODY, HALF, LHALF, STEP_COST, STEP_GAIN, TICK_MS } from '../src/shared/constants.js';
 
 const STEP_TICKS = STEP_COST / STEP_GAIN;
@@ -180,4 +180,37 @@ test('a rider clears a corner at the tightest gap the body allows', () => {
         'the rider sits exactly one row clear of the horizontal arm');
     for (let i = 0; i < step * 90 && rider.alive; i++) tickSim(s, []);
     assert.ok(rider.alive, `rider died at x=${rider.x} passing under the corner at x=80`);
+});
+
+test('a death records whose trail did the killing', () => {
+    const s = createState(1, [{ id: 0, x: 10, y: 40, dir: 0 }]);
+    const u = unicornById(s, 0);
+    for (let y = 30; y <= 50; y++) {
+        paint(s.grid, 10 + LHALF + 1, y, 5);
+    }
+    for (let i = 0; i < STEP_TICKS && u.alive; i++) tickSim(s, []);
+
+    assert.equal(u.alive, false, 'it drove into the trail');
+    assert.equal(u.killedBy, 5, 'the owner of the cell it hit, so the trail owner can be credited');
+});
+
+test('a death on your own trail names you as the killer', () => {
+    const s = createState(1, [{ id: 3, x: 40, y: 40, dir: 0 }]);
+    const u = unicornById(s, 3);
+    for (let y = 30; y <= 50; y++) {
+        paint(s.grid, 40 + LHALF + 1, y, 3);
+    }
+    for (let i = 0; i < STEP_TICKS && u.alive; i++) tickSim(s, []);
+
+    assert.equal(u.alive, false);
+    assert.equal(u.killedBy, 3, 'running into your own colour is self-inflicted');
+});
+
+test('a death that hits nobody credits nobody', () => {
+    const s = createState(1, [{ id: 0, x: LHALF + 1, y: 40, dir: 2 }]);
+    const u = unicornById(s, 0);
+    for (let i = 0; i < STEP_TICKS * 3 && u.alive; i++) tickSim(s, []);
+
+    assert.equal(u.alive, false, 'it drove into the arena edge');
+    assert.equal(u.killedBy, -1, 'a wall of the world is not a player');
 });

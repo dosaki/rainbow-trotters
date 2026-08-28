@@ -3,8 +3,24 @@ import { freeAhead, openness } from './vision.js';
 
 const LOOKAHEAD = 14;
 const SPARKLE_RANGE = 45;
+const toward = (u, tx, ty) => (Math.abs(tx - u.x) > Math.abs(ty - u.y)
+    ? (tx > u.x ? 0 : 2)
+    : (ty > u.y ? 1 : 3));
 
-export const botInputs = (state, u, rng) => {
+const nearest = (state, u) => {
+    let foe = null, near = 1e9;
+    for (const o of state.unicorns) {
+        if (o.id === u.id || !o.alive) continue;
+        const d = Math.abs(o.x - u.x) + Math.abs(o.y - u.y);
+        if (d < near) {
+            near = d;
+            foe = o;
+        }
+    }
+    return foe;
+};
+
+export const botInputs = (state, u, rng, kind = 0) => {
     const g = state.grid;
     const out = [];
     const room = freeAhead(g, u.x, u.y, u.dir, LOOKAHEAD);
@@ -20,13 +36,25 @@ export const botInputs = (state, u, rng) => {
         }
     }
 
+    if (kind && rngInt(rng, 6) === 0) {
+        const foe = nearest(state, u);
+        if (foe) {
+            const [fx, fy] = DIRS[foe.dir];
+            const aim = kind === 1 ? 10 : 0;
+            const want = toward(u, foe.x + fx * aim, foe.y + fy * aim);
+            if (want !== u.dir && isLegalTurn(u.dir, want)
+                && (kind > 1 || openness(g, u.x, u.y, want) > 0)) {
+                out.push(want);
+                return out;
+            }
+        }
+    }
+
     if (room >= LOOKAHEAD) {
         const sp = state.sparkles.find((s) =>
             Math.abs(s.x - u.x) + Math.abs(s.y - u.y) < SPARKLE_RANGE);
         if (sp && rngInt(rng, 5) === 0) {
-            const want = Math.abs(sp.x - u.x) > Math.abs(sp.y - u.y)
-                ? (sp.x > u.x ? 0 : 2)
-                : (sp.y > u.y ? 1 : 3);
+            const want = toward(u, sp.x, sp.y);
             if (want !== u.dir && isLegalTurn(u.dir, want) && openness(g, u.x, u.y, want) > 0) {
                 out.push(want);
                 return out;
