@@ -6,7 +6,7 @@ NAME="rainbow-trotters"
 
 MODE=""
 ROADROLL=1
-TUNE=0
+TUNE=""
 RR_ARGS="-Zab26 -Zdy0 -Zlr2090 -Zmc4 -Zmd32 -Zpr14 -S0,1,2,3,5,6,7,11,13,25,42,85"
 export WAVEDASH=0
 
@@ -14,7 +14,8 @@ for arg in "$@"; do
   case "${arg}" in
     --dev|--ci|--dist)  MODE="${arg}" ;;
     --no-roadroller|--no-rr) ROADROLL=0 ;;
-    --tune) TUNE=1 ;;
+    --tune) TUNE="-O2" ;;
+    --tune-deep) TUNE="-OO" ;;
     --wavedash) WAVEDASH=1 ;;
     *) echo "build.sh: unknown option '${arg}'" >&2; exit 2 ;;
   esac
@@ -29,13 +30,18 @@ if [[ "${MODE}" != "--dev" ]]; then
   mv ./public/client.tmp.js ./public/client.js
 fi
 
+if [[ -n "${TUNE}" ]]; then
+  echo "[tuning] ${TUNE} on $(wc -c < ./public/client.js) bytes, Ctrl+C to stop and keep the best"
+  set +e
+  ./node_modules/.bin/roadroller "${TUNE}" -v ./public/client.js -o ./public/client.tune.js 2>&1 \
+    | sed $'s/\033\[[0-9;]*m//g' | grep -E "<-|search (done|aborted)"
+  set -e
+  echo "[tuning] copy the flags from the last line into RR_ARGS in build.sh, then rebuild"
+  exit 0
+fi
+
 if [[ "${MODE}" == "" || "${MODE}" == "--dist" || "${WAVEDASH}" == 1 ]] && [[ "${ROADROLL}" == 1 ]]; then
-  if [[ "${TUNE}" == 1 ]]; then
-    ./node_modules/.bin/roadroller -O2 -v ./public/client.js -o ./public/client.rr.js 2>&1 \
-      | sed $'s/\033\[[0-9;]*m//g' | grep "search done"
-  else
-    ./node_modules/.bin/roadroller ${RR_ARGS} ./public/client.js -o ./public/client.rr.js
-  fi
+  ./node_modules/.bin/roadroller ${RR_ARGS} ./public/client.js -o ./public/client.rr.js
   mv ./public/client.rr.js ./public/client.js
 fi
 

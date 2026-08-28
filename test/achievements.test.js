@@ -56,7 +56,7 @@ test('storage that throws does not stop the game', async (t) => {
 
 test('the wavedash sink maps to registered ids and skips what is already unlocked', async () => {
     const calls = [];
-    const unlocked = new Set(['snake_death']);
+    const unlocked = new Set(['sd']);
     globalThis.Wavedash = {
         getAchievement: (k) => unlocked.has(k),
         setAchievement: (k, now) => { calls.push([k, now]); return true; },
@@ -67,7 +67,7 @@ test('the wavedash sink maps to registered ids and skips what is already unlocke
     assert.deepEqual(calls, [], 'already unlocked, so no write');
 
     award('t');
-    assert.deepEqual(calls, [['taste_my_colour', true]],
+    assert.deepEqual(calls, [['tmc', true]],
         'the readable id the wavedash dashboard registers, stored immediately');
 
     delete globalThis.Wavedash;

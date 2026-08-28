@@ -1,8 +1,8 @@
 const IDS = {
-    w: 'first_win',
-    o: 'last_one_standing',
-    s: 'snake_death',
-    t: 'taste_my_colour',
+    w: 'fw',
+    o: 'los',
+    s: 'sd',
+    t: 'tmc',
 };
 
 export const award = (id) => {
