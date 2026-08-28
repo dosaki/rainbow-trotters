@@ -17,5 +17,5 @@ export const award = (id) => {
     if (got.includes(id)) return;
     got += id;
     save(KEY, got);
-    showToast(NAMES[id]);
+    showToast(`Unlocked: ${NAMES[id]}`);
 };
